@@ -28,6 +28,7 @@ public partial class Main : Node2D
 	private int _wood;
 	private int _fireLevel = 1;
 	private bool _nameFound = true;
+	private bool _mainMenuOpen = true;
 	private bool _settingsOpen;
 	private string _editingAction;
 	private string _message = "\u5b88\u4f4f\u5f15\u9b42\u706b\u3002";
@@ -94,7 +95,7 @@ public partial class Main : Node2D
 
 	public override void _Process(double delta)
 	{
-		if (_settingsOpen) { QueueRedraw(); return; }
+		if (_mainMenuOpen || _settingsOpen) { QueueRedraw(); return; }
 		var dt = (float)delta;
 		UpdatePlayer(dt);
 		UpdateFire(dt);
@@ -108,6 +109,22 @@ public partial class Main : Node2D
 
 	public override void _Input(InputEvent @event)
 	{
+		if (_mainMenuOpen && !_settingsOpen)
+		{
+			if (@event is InputEventKey menuKey && menuKey.Pressed && !menuKey.Echo)
+			{
+				if (menuKey.Keycode == Key.F1) { _settingsOpen = true; return; }
+				if (menuKey.Keycode == Key.Enter || menuKey.Keycode == Key.Space) { StartGame(); return; }
+			}
+			if (@event is InputEventMouseButton menuMouse && menuMouse.Pressed && menuMouse.ButtonIndex == MouseButton.Left)
+			{
+				var mouse = GetViewport().GetMousePosition();
+				if (MenuStartButton().HasPoint(mouse)) StartGame();
+				if (MenuSettingsButton().HasPoint(mouse)) _settingsOpen = true;
+				if (MenuExitButton().HasPoint(mouse)) GetTree().Quit();
+			}
+			return;
+		}
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
 		{
 			if (keyEvent.Keycode == Key.F1) { _editingAction = null; _settingsOpen = !_settingsOpen; return; }
@@ -120,6 +137,11 @@ public partial class Main : Node2D
 			{
 				if (_editingAction != null) SetBinding(_editingAction, mouseEvent.ButtonIndex);
 				else SelectSettingRow(GetViewport().GetMousePosition());
+				return;
+			}
+			if (mouseEvent.ButtonIndex == MouseButton.Left && GameExitButton().HasPoint(GetViewport().GetMousePosition()))
+			{
+				GetTree().Quit();
 				return;
 			}
 			AddPressedAction(binding => binding.Mouse == mouseEvent.ButtonIndex);
@@ -187,6 +209,17 @@ public partial class Main : Node2D
 	{
 		for (var i = 0; i < Controls.Length; i++)
 			if (SettingRow(i).HasPoint(mouse)) { _editingAction = Controls[i].Action; return; }
+	}
+
+	private Rect2 MenuStartButton() => new(GetViewportRect().Size.X / 2 - 145, GetViewportRect().Size.Y / 2 + 28, 290, 48);
+	private Rect2 MenuSettingsButton() => new(GetViewportRect().Size.X / 2 - 145, GetViewportRect().Size.Y / 2 + 88, 290, 42);
+	private Rect2 MenuExitButton() => new(GetViewportRect().Size.X / 2 - 145, GetViewportRect().Size.Y / 2 + 140, 290, 42);
+	private Rect2 GameExitButton() => new(GetViewportRect().Size.X - 128, GetViewportRect().Size.Y - 52, 110, 32);
+
+	private void StartGame()
+	{
+		_mainMenuOpen = false;
+		_message = "\u5b88\u4f4f\u5f15\u9b42\u706b\u3002";
 	}
 
 	private void UpdatePlayer(float dt)
@@ -345,6 +378,12 @@ public partial class Main : Node2D
 	public override void _Draw()
 	{
 		var size = GetViewportRect().Size;
+		if (_mainMenuOpen)
+		{
+			DrawMainMenu(size);
+			if (_settingsOpen) DrawSettings(size);
+			return;
+		}
 		DrawRect(new Rect2(Vector2.Zero, size), new Color("10131d"));
 		DrawRect(new Rect2(0, GroundY, size.X, size.Y - GroundY), new Color("17212a"));
 		foreach (var tree in _trees) if (!tree.Cut && IsVisibleToPlayer(tree.Position)) DrawTree(Screen(tree.Position));
@@ -404,7 +443,8 @@ public partial class Main : Node2D
 		DrawString(font, new Vector2(32, 69), $"\u751f\u547d {_health:0}/5   \u4f59\u706b {_ember:0}%   \u8bb0\u5fc6\u6728 {_wood}", HorizontalAlignment.Left, -1, 17, Colors.White);
 		DrawString(font, new Vector2(32, 97), _message, HorizontalAlignment.Left, 560, 14, new Color("b9c5d2"));
 		DrawString(font, new Vector2(18, size.Y - 42), "WASD \u79fb\u52a8/\u8df3\u8dc3 | \u5de6\u952e\u6325\u65a7 | \u53f3\u952e\u706b\u79cd | F \u780d\u6811 | E \u6dfb\u706b | U \u5347\u7ea7 | Q \u706b\u70ac | C \u91ce\u8425\u706b", HorizontalAlignment.Left, -1, 14, new Color("d0d8df"));
-		DrawString(font, new Vector2(size.X - 80, size.Y - 18), "F1 \u8bbe\u7f6e", HorizontalAlignment.Left, -1, 14, new Color("aebbc8"));
+		DrawString(font, new Vector2(size.X - 220, size.Y - 18), "F1 \u8bbe\u7f6e", HorizontalAlignment.Left, -1, 14, new Color("aebbc8"));
+		DrawMenuButton(GameExitButton(), "\u9000\u51fa\u6e38\u620f", new Color("442939"));
 		if (_nameFound && _player.DistanceTo(new Vector2(430, GroundY)) < 80)
 			DrawString(font, new Vector2(size.X / 2 - 165, size.Y - 72), "\u540d\u5b57\u788e\u7247\uff1aB \u71c3\u70e7\uff08+\u706b\u52bf/+\u68a6\u7070\uff09  G \u5f52\u8fd8", HorizontalAlignment.Left, -1, 15, new Color("d9e8ff"));
 		DrawMiniMap(size);
@@ -427,6 +467,29 @@ public partial class Main : Node2D
 		DrawLine(Marker(_player) - Vector2.Right * sight, Marker(_player) + Vector2.Right * sight, new Color("dfeeff", .28f), 5);
 		DrawCircle(Marker(_player), 4, new Color("ecf4ff"));
 		DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(10, 97), "\u767d\u8272\uff1a\u4f60  \u6a59\u8272\uff1a\u4e3b\u706b", HorizontalAlignment.Left, -1, 11, new Color("9faebb"));
+	}
+
+	private void DrawMainMenu(Vector2 size)
+	{
+		DrawRect(new Rect2(Vector2.Zero, size), new Color("0c1019"));
+		var center = new Vector2(size.X / 2, size.Y / 2);
+		DrawCircle(center + new Vector2(0, -120), 92, new Color("ff8d42", .08f));
+		DrawCircle(center + new Vector2(0, -120), 42, new Color("ff8d42"));
+		DrawCircle(center + new Vector2(0, -132), 19, new Color("fff2af"));
+		var font = ThemeDB.FallbackFont;
+		DrawString(font, center + new Vector2(-68, -45), "\u5f15\u9b42\u706b", HorizontalAlignment.Left, -1, 42, new Color("ffe2a3"));
+		DrawString(font, center + new Vector2(-182, -12), "\u6bcf\u4e00\u6b21\u71c3\u70e7\u7167\u4eae\u5f52\u9014\uff0c\u4e5f\u5582\u517b\u7740\u8ff7\u96fe\u3002", HorizontalAlignment.Left, -1, 17, new Color("bbc7d4"));
+		DrawMenuButton(MenuStartButton(), "\u5f00\u59cb\u5b88\u706b", new Color("9a6537"));
+		DrawMenuButton(MenuSettingsButton(), "\u5feb\u6377\u952e\u8bbe\u7f6e", new Color("233143"));
+		DrawMenuButton(MenuExitButton(), "\u9000\u51fa\u6e38\u620f", new Color("442939"));
+		DrawString(font, center + new Vector2(-154, 212), "Enter \u5f00\u59cb\u6e38\u620f  |  F1 \u6253\u5f00\u8bbe\u7f6e", HorizontalAlignment.Left, -1, 15, new Color("9dacba"));
+	}
+
+	private void DrawMenuButton(Rect2 rect, string text, Color color)
+	{
+		DrawRect(rect, color);
+		DrawRect(rect, new Color("d5b476"), false, 1);
+		DrawString(ThemeDB.FallbackFont, rect.Position + new Vector2(0, 31), text, HorizontalAlignment.Center, rect.Size.X, 20, Colors.White);
 	}
 
 	private void DrawSettings(Vector2 size)
