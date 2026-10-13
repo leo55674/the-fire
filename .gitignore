@@ -1,3 +1,6 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# 本地开发文档：不纳入 Git，避免代码版本还原影响开发过程记录。
+/docs/
