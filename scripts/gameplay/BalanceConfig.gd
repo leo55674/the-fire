@@ -47,6 +47,14 @@ extends Resource
 @export var sword_hit_radius: float = 90
 ## 御剑持续操控时两次命中之间的间隔，单位为秒。
 @export var sword_hit_cooldown: float = .12
+## 每次保留最近剑式的最长时长，单位为秒。
+@export var sword_record_max_duration: float = 4
+## 剑式被视为有效录制所需的最短时长，单位为秒。
+@export var sword_record_min_duration: float = .5
+## 剑式被视为有效录制所需的最短累计飞行距离，单位为像素。
+@export var sword_record_min_distance: float = 50
+## 从剑重放伤害相对当前剑胚伤害的倍率。
+@export var sword_replay_damage_multiplier: float = .5
 ## 飞剑主动攻击的命中判定半径，单位为像素。
 @export var enemy_attack_hit_radius: float = 70
 ## 飞剑主动攻击之间的间隔，单位为秒。

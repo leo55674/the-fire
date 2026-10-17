@@ -90,6 +90,7 @@ public partial class Main : Node2D
 			}
 			return;
 		}
+		if (_session.ComboOpen) { HandleComboInput(@event); return; }
 		if (_settingsOpen && _draggingVolume && @event is InputEventMouseMotion volumeMotion) { SetMasterVolumeFromMouse(volumeMotion.Position.X); QueueRedraw(); return; }
 		if (@event is InputEventMouseMotion swordMotion) { if (_session.InventoryOpen) return; if (!_settingsOpen) _session.CaptureSwordMouseMotion(swordMotion.Relative); }
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)

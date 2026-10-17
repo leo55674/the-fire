@@ -129,6 +129,10 @@ public partial class GameSession : Node
 		Player = MainFire; Enemies.Clear(); Fires.Clear();
 		_dashRemaining = 0; _dashCooldown = 0; IsDashing = false;
 		SwordState = SwordMode.Following; SwordPosition = SwordFollowPosition(); CameraFocus = Player; _swordControlBlend = 0;
+		ReplaySwordPosition = ReplaySwordFollowPosition(); ReplaySwordVelocity = Vector2.Zero;
+		_recordingSamples.Clear(); _recordedSword.Clear(); _playingSword = Array.Empty<SwordSample>(); _replaySequence = Array.Empty<SwordSample[]>();
+		_swordCombo.RemoveAll(id => id == CustomSwordMoveId); ComboOpen = false;
+		_replayActive = false; _replayReturning = false; _replayTime = 0; _replayHitCooldown = 0;
 		Input.MouseMode = Input.MouseModeEnum.Visible;
 		Chests.Clear();
 		SpawnChestNearPlayer();

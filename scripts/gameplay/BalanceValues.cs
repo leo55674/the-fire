@@ -28,6 +28,10 @@ public sealed class BalanceValues
 	public float HeavySwordDamage => _resource.Get("heavy_sword_damage").AsSingle();
 	public float SwordHitRadius => _resource.Get("sword_hit_radius").AsSingle();
 	public float SwordHitCooldown => _resource.Get("sword_hit_cooldown").AsSingle();
+	public float SwordRecordMaxDuration => _resource.Get("sword_record_max_duration").AsSingle();
+	public float SwordRecordMinDuration => _resource.Get("sword_record_min_duration").AsSingle();
+	public float SwordRecordMinDistance => _resource.Get("sword_record_min_distance").AsSingle();
+	public float SwordReplayDamageMultiplier => _resource.Get("sword_replay_damage_multiplier").AsSingle();
 	public float EnemyAttackHitRadius => _resource.Get("enemy_attack_hit_radius").AsSingle();
 	public float AttackCooldown => _resource.Get("attack_cooldown").AsSingle();
 	public float MaxFuel => _resource.Get("max_fuel").AsSingle();

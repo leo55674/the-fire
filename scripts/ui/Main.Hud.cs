@@ -20,7 +20,10 @@ public partial class Main : Node2D
 		DrawString(font, new Vector2(72, 90), $"{_session.Ember:0}%", HorizontalAlignment.Center, emberBar.Size.X, 13, Colors.White);
 		DrawString(font, new Vector2(276, 91), $"剑骸 {_session.Wood}", HorizontalAlignment.Left, 160, 15, Colors.White);
 		DrawString(font, new Vector2(32, 119), _session.Message, HorizontalAlignment.Left, 560, 14, new Color("b9c5d2"));
-		DrawString(font, new Vector2(18, size.Y - 42), "WASD 移动 | 左键攻击 | 右键御剑 | F 搜刮 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, -1, 14, new Color("d0d8df"));
+		var swordRecordStatus = _session.IsSwordControlled ? $"录制剑式 {_session.SwordRecordingDuration:0.0} 秒"
+			: _session.IsReplaySwordActive ? "从剑正在连招" : $"连招 {_session.SwordCombo.Count} 式 · J 搭配 · R 出招";
+		DrawString(font, new Vector2(480, 44), swordRecordStatus, HorizontalAlignment.Left, 390, 16, new Color("f4d795"));
+		DrawString(font, new Vector2(18, size.Y - 42), "WASD 移动 | 左键攻击 | 右键御剑 | J 搭配 | R 连招 | F 搜刮 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, -1, 14, new Color("d0d8df"));
 		DrawTextureRect(_settingsIcon, new Rect2(size.X - 250, size.Y - 39, 24, 24), false);
 		DrawString(font, new Vector2(size.X - 220, size.Y - 18), "F1 \u8bbe\u7f6e", HorizontalAlignment.Left, -1, 14, new Color("aebbc8"));
 		DrawIconButton(GameExitButton(), _closeIcon, "\u9000\u51fa\u6e38\u620f", new Color("442939"));
@@ -30,6 +33,7 @@ public partial class Main : Node2D
 		if (_finalNight > 0) DrawString(font, new Vector2(size.X - 218, 142), $"\u70fd\u706b\u957f\u591c\uff1a{MathF.Ceiling(_finalNight)}", HorizontalAlignment.Left, -1, 17, new Color("ffb4a2"));
 		if (!string.IsNullOrEmpty(_session.SearchPrompt)) DrawSearchPrompt(size);
 		if (_session.InventoryOpen) DrawInventory(size);
+		if (_session.ComboOpen) DrawCombo(size);
 		if (_settingsOpen) DrawSettings(size);
 	}
 

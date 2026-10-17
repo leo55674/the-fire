@@ -26,6 +26,23 @@ public partial class GameSession : Node
 	private Vector2 _swordControlTarget;
 	private Vector2 _swordAttackTarget;
 	private bool _swordAttackHit;
+	private readonly List<SwordSample> _recordingSamples = new();
+	private readonly List<SwordSample> _recordedSword = new();
+	private SwordSample[] _playingSword = Array.Empty<SwordSample>();
+	private SwordSample[][] _replaySequence = Array.Empty<SwordSample[]>();
+	private int _replayMoveIndex;
+	private readonly List<int> _swordCombo = new() { 2, 0, 4 };
+	private Vector2 _recordingOrigin;
+	private int _recordingFacing;
+	private float _recordingTime;
+	private float _replayTime;
+	private int _replaySegment;
+	private int _replayFacing;
+	private Vector2 _replayOrigin;
+	private float _replayDamage;
+	private float _replayHitCooldown;
+	private bool _replayActive;
+	private bool _replayReturning;
 
 	public readonly List<TreeState> Trees = new();
 	public readonly List<EnemyState> Enemies = new();
@@ -42,6 +59,8 @@ public partial class GameSession : Node
 	public float FinalNight { get; private set; }
 	public Vector2 SwordPosition { get; private set; }
 	public Vector2 SwordVelocity { get; private set; }
+	public Vector2 ReplaySwordPosition { get; private set; }
+	public Vector2 ReplaySwordVelocity { get; private set; }
 	public Vector2 CameraFocus { get; private set; }
 	public SwordMode SwordState { get; private set; } = SwordMode.Following;
 	public SwordArchetype SwordFrame { get; private set; } = SwordArchetype.Light;
@@ -51,6 +70,12 @@ public partial class GameSession : Node
 	public float SwordControlBlend => _swordControlBlend;
 	public float SwordDistance => SwordPosition.DistanceTo(Player);
 	public float SwordFollowDistance => SwordPosition.DistanceTo(SwordFollowPosition());
+	public bool HasRecordedSword => _recordedSword.Count > 1;
+	public bool IsReplaySwordActive => _replayActive || _replayReturning;
+	public IReadOnlyList<int> SwordCombo => _swordCombo;
+	public bool ComboOpen { get; private set; }
+	public float RecordedSwordDuration => HasRecordedSword ? _recordedSword[^1].Time : 0;
+	public float SwordRecordingDuration => IsSwordControlled ? MathF.Min(_recordingTime, _balance.SwordRecordMaxDuration) : 0;
 	public float SwordDamage => SwordFrame == SwordArchetype.Light ? _balance.LightSwordDamage : _balance.HeavySwordDamage;
 	public BalanceValues Balance => _balance;
 	public int PlayerFacing { get; private set; } = 1;
@@ -80,6 +105,15 @@ public partial class GameSession : Node
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
 		Player = MainFire;
 		SwordPosition = SwordFollowPosition();
+		ReplaySwordPosition = ReplaySwordFollowPosition();
+		_recordingSamples.Clear();
+		_recordedSword.Clear();
+		_playingSword = Array.Empty<SwordSample>();
+		_replaySequence = Array.Empty<SwordSample[]>();
+		_replayMoveIndex = 0;
+		ComboOpen = false;
+		_replayActive = false;
+		_replayReturning = false;
 		CameraFocus = Player;
 		Trees.Clear();
 		for (var i = -10; i <= 10; i++)
@@ -96,6 +130,8 @@ public partial class GameSession : Node
 		if (InventoryOpen)
 		{
 			_input.Pressed("search");
+			_input.Pressed("replay_sword");
+			_input.Pressed("combo_menu");
 			if (_input.Pressed("switch_sword"))
 			{
 				if (_inventory.Count("light_sword") + _inventory.Count("heavy_sword") == 2)
@@ -118,6 +154,8 @@ public partial class GameSession : Node
 			}
 			return;
 		}
+		if (_input.Pressed("combo_menu")) SetComboOpen(!ComboOpen);
+		if (ComboOpen) { _input.ClearPressed(); return; }
 		var previousPlayer = Player;
 		UpdatePlayer(dt);
 		var moved = Player.DistanceTo(previousPlayer) > .1f;
@@ -134,6 +172,12 @@ public partial class GameSession : Node
 	public void CaptureSwordMouseMotion(Vector2 relative)
 	{
 		if (IsSwordControlled) _swordControlTarget += relative;
+	}
+
+	public void SetComboOpen(bool open)
+	{
+		ComboOpen = open;
+		Input.MouseMode = open || !IsSwordControlled ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
 	}
 
 	public void ToggleInventory()
@@ -170,6 +214,9 @@ public partial class GameSession : Node
 		GroundY = groundY;
 		Player += offset;
 		SwordPosition += offset;
+		ReplaySwordPosition += offset;
+		_recordingOrigin += offset;
+		_replayOrigin += offset;
 		_swordControlTarget += offset;
 		CameraFocus += offset;
 		foreach (var tree in Trees) tree.Position += offset;

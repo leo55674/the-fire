@@ -34,8 +34,11 @@ public partial class WorldPresentation : Node2D
 	private readonly List<ColorRect> _chestBodies = new();
 	private readonly List<ColorRect> _chestLids = new();
 	private readonly List<Vector2> _swordTrailPoints = new();
+	private readonly List<Vector2> _replayTrailPoints = new();
 	private Sprite2D _swordVisual;
+	private Sprite2D _replayVisual;
 	private Line2D _swordTrail;
+	private Line2D _replayTrail;
 	private Line2D _spiritLine;
 
 	public override void _Ready()
@@ -45,15 +48,23 @@ public partial class WorldPresentation : Node2D
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
 		_swordTrail = new Line2D { Name = "SwordTrail", Width = 5, DefaultColor = new Color("78dfff", .42f) };
+		_replayTrail = new Line2D { Name = "ReplaySwordTrail", Width = 4, DefaultColor = new Color("f4c978", .55f) };
 		_spiritLine = new Line2D { Name = "SpiritLine", Width = 2, DefaultColor = new Color("8be8ff", .5f) };
 		_swordVisual = new Sprite2D
 		{
 			Name = "Sword01Soulblade", Texture = _swordTexture, Scale = Vector2.One * .075f,
 			Offset = new Vector2(291, 16)
 		};
+		_replayVisual = new Sprite2D
+		{
+			Name = "ReplaySword", Texture = _swordTexture, Scale = Vector2.One * .065f,
+			Offset = new Vector2(291, 16), Modulate = new Color("ffd991", .82f)
+		};
 		_projectiles.AddChild(_swordTrail);
+		_projectiles.AddChild(_replayTrail);
 		_projectiles.AddChild(_spiritLine);
 		_projectiles.AddChild(_swordVisual);
+		_projectiles.AddChild(_replayVisual);
 	}
 
 	public void Sync(GameSession session, bool menuOpen)
@@ -71,6 +82,7 @@ public partial class WorldPresentation : Node2D
 		UpdateEnemies(session);
 		UpdateChests(session);
 		UpdateSword(session);
+		UpdateReplaySword(session);
 		UpdatePlayer(session);
 	}
 
@@ -109,6 +121,26 @@ public partial class WorldPresentation : Node2D
 			_spiritLine.DefaultColor = color;
 			_spiritLine.Width = Mathf.Lerp(1, 2, session.SwordControlBlend);
 		}
+	}
+
+	private void UpdateReplaySword(GameSession session)
+	{
+		_replayVisual.Visible = session.HasRecordedSword;
+		_replayTrail.Visible = session.IsReplaySwordActive;
+		if (!session.HasRecordedSword) { _replayTrailPoints.Clear(); return; }
+		_replayVisual.Position = Screen(session, session.ReplaySwordPosition);
+		var rotation = session.IsReplaySwordActive && session.ReplaySwordVelocity.LengthSquared() > 1
+			? session.ReplaySwordVelocity.Angle() : -Mathf.Pi / 2;
+		_replayVisual.Rotation = Mathf.LerpAngle(_replayVisual.Rotation, rotation, .18f);
+		if (session.IsReplaySwordActive)
+		{
+			_replayTrailPoints.Add(session.ReplaySwordPosition);
+			if (_replayTrailPoints.Count > 18) _replayTrailPoints.RemoveAt(0);
+		}
+		else _replayTrailPoints.Clear();
+		var trail = new Vector2[_replayTrailPoints.Count];
+		for (var i = 0; i < trail.Length; i++) trail[i] = Screen(session, _replayTrailPoints[i]);
+		_replayTrail.Points = trail;
 	}
 
 	private void UpdateGround(Vector2 viewport, float groundY)

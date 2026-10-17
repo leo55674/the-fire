@@ -29,6 +29,7 @@ public partial class GameSession : Node
 	public enum SwordMode { Following, Controlled, Attacking, Returning }
 	public enum SwordArchetype { Light, Heavy }
 	public enum EnemyVisualState { Normal, Hurt, Dead }
+	private readonly record struct SwordSample(float Time, Vector2 Offset);
 
 	public sealed class EnemyState
 	{
