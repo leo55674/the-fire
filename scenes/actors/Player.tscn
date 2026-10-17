@@ -1,15 +1,48 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=14 format=3]
 
-[ext_resource type="Script" path="res://PlayerPresentation.cs" id="1_presentation"]
+[ext_resource type="Script" path="res://scripts/presentation/PlayerPresentation.cs" id="1_presentation"]
 [ext_resource type="Texture2D" path="res://assets/art/runtime/characters/player/keeper/chr_keeper_turnaround.png" id="2_turnaround"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/player/keeper/chr_keeper_idle_yawn_strip_8x896.png" id="3_idle_yawn"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_front"]
 atlas = ExtResource("2_turnaround")
-region = Rect2(120, 18, 483, 839)
+region = Rect2(49, 18, 530, 775)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_side"]
 atlas = ExtResource("2_turnaround")
-region = Rect2(724, 18, 313, 839)
+region = Rect2(677, 18, 530, 775)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_1"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(0, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_2"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(896, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_3"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(1792, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_4"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(2688, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_5"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(3584, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_6"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(4480, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_7"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(5376, 0, 896, 896)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_yawn_8"]
+atlas = ExtResource("3_idle_yawn")
+region = Rect2(6272, 0, 896, 896)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_keeper"]
 animations = [{
@@ -17,6 +50,11 @@ animations = [{
 "loop": true,
 "name": &"idle",
 "speed": 1.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_1")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_2")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_3")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_4")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_5")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_6")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_7")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_idle_yawn_8")}],
+"loop": false,
+"name": &"idle_yawn",
+"speed": 7.0
 }, {
 "frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_side")}],
 "loop": true,
@@ -30,8 +68,8 @@ animations = [{
 }]
 
 [node name="PlayerPresentation" type="AnimatedSprite2D"]
-scale = Vector2(0.12, 0.12)
+scale = Vector2(0.13, 0.13)
 sprite_frames = SubResource("SpriteFrames_keeper")
 animation = &"idle"
-offset = Vector2(0, -419.5)
+offset = Vector2(0, -387.5)
 script = ExtResource("1_presentation")

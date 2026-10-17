@@ -1,0 +1,368 @@
+[gd_scene format=3 uid="uid://db7kl3w510v1c"]
+
+[ext_resource type="Script" uid="uid://63vch27i5h6k" path="res://scripts/ui/Main.cs" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://bim4kon6byvc8" path="res://scripts/input/ActionBindings.cs" id="3_input"]
+[ext_resource type="Script" uid="uid://bsnnu57i5qt1q" path="res://scripts/gameplay/GameSession.cs" id="4_session"]
+[ext_resource type="Script" uid="uid://c37r135wlovbb" path="res://scripts/presentation/WorldPresentation.cs" id="5_world"]
+[ext_resource type="Texture2D" uid="uid://cb0p2u0fsw7gk" path="res://assets/art/runtime/environment/backgrounds/aurora_castle_title.png" id="6_title"]
+[ext_resource type="Texture2D" uid="uid://bj0b4emapfvhx" path="res://assets/art/runtime/environment/backgrounds/aurora_moonlit_snow_castle.png" id="7_game"]
+[ext_resource type="Texture2D" uid="uid://ejj8maulaimw" path="res://assets/art/runtime/environment/tilesets/road_cloud_platform.png" id="8_road"]
+[ext_resource type="Texture2D" uid="uid://c64wnomwf4gvs" path="res://assets/art/runtime/environment/props/conifer_tree_atlas.png" id="9_trees"]
+[ext_resource type="Texture2D" uid="uid://cvtk8hbqrs2h8" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_low.png" id="10_fire_low"]
+[ext_resource type="Texture2D" uid="uid://dt1ee7iu18x87" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_medium.png" id="11_fire_medium"]
+[ext_resource type="Texture2D" uid="uid://diat28r0j1w0h" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_high.png" id="12_fire_high"]
+[ext_resource type="Texture2D" uid="uid://dqlmrhuddv031" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_blazing.png" id="13_fire_blazing"]
+[ext_resource type="Texture2D" uid="uid://b2qy2ni1f5fo4" path="res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png" id="14_button"]
+[ext_resource type="Texture2D" uid="uid://dxnuo1ei8h8us" path="res://assets/art/runtime/characters/enemies/enemy_hunter_normal.png" id="15_hunter_normal"]
+[ext_resource type="Texture2D" uid="uid://b6vbh3leguadj" path="res://assets/art/runtime/characters/enemies/enemy_hunter_hurt.png" id="16_hunter_hurt"]
+[ext_resource type="Texture2D" uid="uid://mk01cgh3eo35" path="res://assets/art/runtime/characters/enemies/enemy_hunter_dead.png" id="17_hunter_dead"]
+[ext_resource type="Texture2D" uid="uid://ct6r45wnhlilr" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_normal.png" id="18_extinguisher_normal"]
+[ext_resource type="Texture2D" uid="uid://dadqxfp0mianv" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_hurt.png" id="19_extinguisher_hurt"]
+[ext_resource type="Texture2D" uid="uid://cgms27yedil2j" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_dead.png" id="20_extinguisher_dead"]
+[ext_resource type="Texture2D" uid="uid://bswo8l0ujl23r" path="res://assets/art/runtime/characters/enemies/enemy_thief_normal.png" id="21_thief_normal"]
+[ext_resource type="Texture2D" uid="uid://cr86cmp8q61ck" path="res://assets/art/runtime/characters/enemies/enemy_thief_hurt.png" id="22_thief_hurt"]
+[ext_resource type="Texture2D" uid="uid://oc405gy2qgd1" path="res://assets/art/runtime/characters/enemies/enemy_thief_dead.png" id="23_thief_dead"]
+[ext_resource type="Script" uid="uid://dm7fk4kngu72p" path="res://scripts/presentation/AudioDirector.cs" id="24_audio"]
+[ext_resource type="AudioStream" uid="uid://dr8c03rumhyme" path="res://assets/audio/music/bgm_sword_tomb_rust_mist_loop.wav" id="25_music"]
+[ext_resource type="AudioStream" uid="uid://biyy0xldr8n68" path="res://assets/audio/sfx/combat/sfx_sword_launch.wav" id="26_launch"]
+[ext_resource type="Script" uid="uid://h0ufbwso4mq7" path="res://scripts/gameplay/Inventory.cs" id="27_inventory"]
+[ext_resource type="AudioStream" uid="uid://3msptx0rw773" path="res://assets/audio/sfx/combat/sfx_spirit_hurt.wav" id="28_hurt"]
+[ext_resource type="Texture2D" uid="uid://dlg1mgdq4e27s" path="res://assets/art/runtime/weapons/swords/sword_01_soulblade.png" id="29_sword_01"]
+[ext_resource type="AudioStream" uid="uid://ctqqfkt8abshd" path="res://assets/audio/sfx/combat/sfx_sword_hit.wav" id="30_hit"]
+[ext_resource type="AudioStream" uid="uid://bt2lv8hji84s0" path="res://assets/audio/sfx/combat/sfx_sword_defeat.wav" id="31_defeat"]
+[ext_resource type="AudioStream" uid="uid://ci63kses4cdkg" path="res://assets/audio/sfx/sword/sfx_spirit_enter_sword.wav" id="32_control"]
+[ext_resource type="AudioStream" uid="uid://cti65dmjklmp" path="res://assets/audio/sfx/sword/sfx_sword_return.wav" id="33_return"]
+[ext_resource type="AudioStream" uid="uid://dl15bw3x212yw" path="res://assets/audio/sfx/sword/sfx_sword_frame_switch.wav" id="34_switch"]
+[ext_resource type="Resource" uid="uid://cfewfvekymwol" path="res://resources/balance/default_balance.tres" id="35_balance"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tree_1"]
+atlas = ExtResource("9_trees")
+region = Rect2(16, 4, 354, 612)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tree_2"]
+atlas = ExtResource("9_trees")
+region = Rect2(388, 44, 298, 574)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tree_3"]
+atlas = ExtResource("9_trees")
+region = Rect2(714, 126, 288, 490)
+
+[node name="TheFire" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView")]
+script = ExtResource("1_main")
+_input = NodePath("ActionBindings")
+_session = NodePath("GameSession")
+_worldPresentation = NodePath("World")
+_titleBackdropView = NodePath("Background/TitleBackdrop")
+_gameBackdropView = NodePath("Background/GameBackdrop")
+_mainMenuView = NodePath("Interface/MainMenu")
+_startButtonView = NodePath("Interface/MainMenu/StartButton")
+_settingsButtonView = NodePath("Interface/MainMenu/SettingsButton")
+_exitButtonView = NodePath("Interface/MainMenu/ExitButton")
+
+[node name="ActionBindings" type="Node" parent="." unique_id=1966097770]
+script = ExtResource("3_input")
+
+[node name="Inventory" type="Node" parent="." unique_id=158398390]
+script = ExtResource("27_inventory")
+
+[node name="GameSession" type="Node" parent="." unique_id=1269228634 node_paths=PackedStringArray("_input", "_inventory")]
+script = ExtResource("4_session")
+_input = NodePath("../ActionBindings")
+_inventory = NodePath("../Inventory")
+_balanceResource = ExtResource("35_balance")
+
+[node name="Audio" type="Node" parent="." unique_id=2029655943 node_paths=PackedStringArray("_session", "_music", "_swordLaunch", "_swordHit", "_swordDefeat", "_controlEnter", "_swordReturn", "_swordSwitch", "_spiritHurt")]
+script = ExtResource("24_audio")
+_session = NodePath("../GameSession")
+_music = NodePath("Music")
+_swordLaunch = NodePath("SwordLaunch")
+_swordHit = NodePath("SwordHit")
+_swordDefeat = NodePath("SwordDefeat")
+_controlEnter = NodePath("ControlEnter")
+_swordReturn = NodePath("SwordReturn")
+_swordSwitch = NodePath("SwordSwitch")
+_spiritHurt = NodePath("SpiritHurt")
+
+[node name="Music" type="AudioStreamPlayer" parent="Audio" unique_id=857706577]
+stream = ExtResource("25_music")
+volume_db = -15.0
+
+[node name="SwordLaunch" type="AudioStreamPlayer" parent="Audio" unique_id=1398623860]
+stream = ExtResource("26_launch")
+volume_db = -4.0
+
+[node name="SwordHit" type="AudioStreamPlayer" parent="Audio" unique_id=1601715675]
+stream = ExtResource("30_hit")
+volume_db = -2.0
+
+[node name="SwordDefeat" type="AudioStreamPlayer" parent="Audio" unique_id=1538117750]
+stream = ExtResource("31_defeat")
+volume_db = -1.0
+
+[node name="ControlEnter" type="AudioStreamPlayer" parent="Audio" unique_id=808994208]
+stream = ExtResource("32_control")
+volume_db = -4.0
+
+[node name="SwordReturn" type="AudioStreamPlayer" parent="Audio" unique_id=555394021]
+stream = ExtResource("33_return")
+volume_db = -4.0
+
+[node name="SwordSwitch" type="AudioStreamPlayer" parent="Audio" unique_id=2096716725]
+stream = ExtResource("34_switch")
+volume_db = -6.0
+
+[node name="SpiritHurt" type="AudioStreamPlayer" parent="Audio" unique_id=577073363]
+stream = ExtResource("28_hurt")
+volume_db = -2.0
+
+[node name="Background" type="CanvasLayer" parent="." unique_id=630582118]
+layer = -10
+
+[node name="TitleBackdrop" type="TextureRect" parent="Background" unique_id=1387569042]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6_title")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="GameBackdrop" type="TextureRect" parent="Background" unique_id=694803196]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("7_game")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="World" type="Node2D" parent="." unique_id=1139518992 node_paths=PackedStringArray("_input", "_road", "_ground", "_trees", "_mainFire", "_nameFragment", "_temporaryFires", "_enemies", "_chests", "_projectiles", "_axeSwing", "_player")]
+visible = false
+z_index = -1
+script = ExtResource("5_world")
+_roadTexture = ExtResource("8_road")
+_treeAtlas = ExtResource("9_trees")
+_swordTexture = ExtResource("29_sword_01")
+_mainFireTextures = Array[Texture2D]([ExtResource("10_fire_low"), ExtResource("11_fire_medium"), ExtResource("12_fire_high"), ExtResource("13_fire_blazing")])
+_enemyTextures = Array[Texture2D]([ExtResource("15_hunter_normal"), ExtResource("16_hunter_hurt"), ExtResource("17_hunter_dead"), ExtResource("18_extinguisher_normal"), ExtResource("19_extinguisher_hurt"), ExtResource("20_extinguisher_dead"), ExtResource("21_thief_normal"), ExtResource("22_thief_hurt"), ExtResource("23_thief_dead")])
+_input = NodePath("../ActionBindings")
+_road = NodePath("Environment/Road")
+_ground = NodePath("Environment/Ground")
+_trees = NodePath("Environment/Trees")
+_mainFire = NodePath("Environment/MainFire")
+_nameFragment = NodePath("Environment/NameFragment")
+_temporaryFires = NodePath("DynamicEntities/TemporaryFires")
+_enemies = NodePath("DynamicEntities/Enemies")
+_chests = NodePath("DynamicEntities/Chests")
+_projectiles = NodePath("DynamicEntities/Projectiles")
+_axeSwing = NodePath("Actors/AxeSwing")
+_player = NodePath("Actors/PlayerPresentation")
+
+[node name="Environment" type="Node2D" parent="World" unique_id=1560457430]
+
+[node name="Ground" type="Polygon2D" parent="World/Environment" unique_id=2021894169]
+color = Color(0.0901961, 0.129412, 0.164706, 1)
+polygon = PackedVector2Array(0, 840, 1920, 840, 1920, 1080, 0, 1080)
+
+[node name="Road" type="Node2D" parent="World/Environment" unique_id=1047413327]
+
+[node name="RoadTile01" type="Sprite2D" parent="World/Environment/Road" unique_id=1547634227]
+texture = ExtResource("8_road")
+centered = false
+region_enabled = true
+region_rect = Rect2(256, 0, 1536, 768)
+
+[node name="RoadTile02" type="Sprite2D" parent="World/Environment/Road" unique_id=1237498961]
+texture = ExtResource("8_road")
+centered = false
+region_enabled = true
+region_rect = Rect2(256, 0, 1536, 768)
+
+[node name="RoadTile03" type="Sprite2D" parent="World/Environment/Road" unique_id=722223480]
+texture = ExtResource("8_road")
+centered = false
+region_enabled = true
+region_rect = Rect2(256, 0, 1536, 768)
+
+[node name="Trees" type="Node2D" parent="World/Environment" unique_id=1399209012]
+
+[node name="Tree01" type="Sprite2D" parent="World/Environment/Trees" unique_id=1301482163]
+position = Vector2(250, 742)
+scale = Vector2(0.32, 0.32)
+texture = SubResource("AtlasTexture_tree_1")
+centered = false
+
+[node name="Tree02" type="Sprite2D" parent="World/Environment/Trees" unique_id=1708762176]
+position = Vector2(520, 656)
+scale = Vector2(0.32, 0.32)
+texture = SubResource("AtlasTexture_tree_2")
+centered = false
+
+[node name="Tree03" type="Sprite2D" parent="World/Environment/Trees" unique_id=1468003558]
+position = Vector2(1240, 683)
+scale = Vector2(0.32, 0.32)
+texture = SubResource("AtlasTexture_tree_3")
+centered = false
+
+[node name="MainFire" type="Sprite2D" parent="World/Environment" unique_id=1061087377]
+position = Vector2(960, 742)
+scale = Vector2(0.46875, 0.46875)
+texture = ExtResource("11_fire_medium")
+
+[node name="NameFragment" type="Label" parent="World/Environment" unique_id=605878833]
+offset_left = 1368.0
+offset_top = 785.0
+offset_right = 1430.0
+offset_bottom = 818.0
+theme_override_colors/font_color = Color(0.862745, 0.92549, 1, 1)
+theme_override_colors/font_outline_color = Color(0.14902, 0.2, 0.270588, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "NAME"
+
+[node name="Actors" type="Node2D" parent="World" unique_id=1539611606]
+z_index = 10
+
+[node name="PlayerPresentation" parent="World/Actors" unique_id=817833126 instance=ExtResource("2_player")]
+position = Vector2(960, 840)
+
+[node name="AxeSwing" type="Line2D" parent="World/Actors" unique_id=1306678128]
+visible = false
+width = 7.0
+default_color = Color(0.85098, 0.835294, 0.772549, 1)
+
+[node name="DynamicEntities" type="Node2D" parent="World" unique_id=1566868917]
+z_index = 5
+
+[node name="TemporaryFires" type="Node2D" parent="World/DynamicEntities" unique_id=1380586458]
+
+[node name="Enemies" type="Node2D" parent="World/DynamicEntities" unique_id=1060770845]
+
+[node name="Chests" type="Node2D" parent="World/DynamicEntities" unique_id=1515862706]
+
+[node name="Projectiles" type="Node2D" parent="World/DynamicEntities" unique_id=615148733]
+
+[node name="Interface" type="CanvasLayer" parent="." unique_id=1238356454]
+layer = 10
+
+[node name="MainMenu" type="Control" parent="Interface" unique_id=424085361]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Interface/MainMenu" unique_id=1314607913]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 210.0
+offset_bottom = 305.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.886275, 0.639216, 1)
+theme_override_colors/font_outline_color = Color(0.0745098, 0.0509804, 0.0392157, 0.9)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 72
+text = "剑冢"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Interface/MainMenu" unique_id=829091408]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 305.0
+offset_bottom = 355.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.823529, 0.847059, 0.87451, 1)
+theme_override_font_sizes/font_size = 24
+text = "以神识御剑，在锈雾中寻回万剑之名。"
+horizontal_alignment = 1
+
+[node name="StartButton" type="TextureRect" parent="Interface/MainMenu" unique_id=278516143]
+layout_mode = 0
+offset_left = 750.0
+offset_top = 432.0
+offset_right = 1170.0
+offset_bottom = 548.0
+mouse_filter = 2
+texture = ExtResource("14_button")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="Interface/MainMenu/StartButton" unique_id=1838986451]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.941176, 0.709804, 1)
+theme_override_font_sizes/font_size = 30
+text = "开始远征"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SettingsButton" type="TextureRect" parent="Interface/MainMenu" unique_id=1035622569]
+layout_mode = 0
+offset_left = 750.0
+offset_top = 538.0
+offset_right = 1170.0
+offset_bottom = 654.0
+mouse_filter = 2
+texture = ExtResource("14_button")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="Interface/MainMenu/SettingsButton" unique_id=1448485820]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.909804, 0.87451, 0.831373, 1)
+theme_override_font_sizes/font_size = 28
+text = "设置"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExitButton" type="TextureRect" parent="Interface/MainMenu" unique_id=1418419756]
+layout_mode = 0
+offset_left = 750.0
+offset_top = 644.0
+offset_right = 1170.0
+offset_bottom = 760.0
+mouse_filter = 2
+texture = ExtResource("14_button")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="Interface/MainMenu/ExitButton" unique_id=770955909]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.909804, 0.87451, 0.831373, 1)
+theme_override_font_sizes/font_size = 28
+text = "退出游戏"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="Interface/MainMenu" unique_id=1595888802]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 785.0
+offset_bottom = 830.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.780392, 0.815686, 0.85098, 1)
+theme_override_font_sizes/font_size = 18
+text = "↑↓ / W S 选择  |  Enter 确认  |  F1 设置"
+horizontal_alignment = 1

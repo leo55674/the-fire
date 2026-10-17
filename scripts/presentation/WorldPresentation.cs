@@ -4,16 +4,14 @@ using System.Collections.Generic;
 
 public partial class WorldPresentation : Node2D
 {
-	private static readonly Rect2 RoadRegion = new(0, 320, 2172, 196);
 	private static readonly Rect2[] TreeRegions =
 	{
 		new(16, 4, 354, 612), new(388, 44, 298, 574), new(714, 126, 288, 490),
 		new(1024, 152, 246, 464), new(1302, 230, 208, 388)
 	};
-	private static readonly Rect2 TreeStumpRegion = new(882, 613, 218, 260);
-
-	[Export] private Texture2D _roadAtlas;
+	[Export] private Texture2D _roadTexture;
 	[Export] private Texture2D _treeAtlas;
+	[Export] private Texture2D _swordTexture;
 	[Export] private Godot.Collections.Array<Texture2D> _mainFireTextures;
 	[Export] private Godot.Collections.Array<Texture2D> _enemyTextures;
 	[Export] private ActionBindings _input;
@@ -24,6 +22,7 @@ public partial class WorldPresentation : Node2D
 	[Export] private Label _nameFragment;
 	[Export] private Node2D _temporaryFires;
 	[Export] private Node2D _enemies;
+	[Export] private Node2D _chests;
 	[Export] private Node2D _projectiles;
 	[Export] private Line2D _axeSwing;
 	[Export] private PlayerPresentation _player;
@@ -31,14 +30,30 @@ public partial class WorldPresentation : Node2D
 	private readonly List<Sprite2D> _treeVisuals = new();
 	private readonly List<Sprite2D> _fireVisuals = new();
 	private readonly List<Sprite2D> _enemyVisuals = new();
-	private readonly List<ColorRect> _projectileVisuals = new();
+	private readonly List<Label> _enemyDamageLabels = new();
+	private readonly List<ColorRect> _chestBodies = new();
+	private readonly List<ColorRect> _chestLids = new();
+	private readonly List<Vector2> _swordTrailPoints = new();
+	private Sprite2D _swordVisual;
+	private Line2D _swordTrail;
+	private Line2D _spiritLine;
 
 	public override void _Ready()
 	{
-		if (_enemyTextures == null || _enemyTextures.Count != 9)
-			throw new InvalidOperationException("WorldPresentation requires three states for each of its three enemy types.");
+		if (_enemyTextures == null || _enemyTextures.Count != 9 || _swordTexture == null)
+			throw new InvalidOperationException("WorldPresentation requires enemy state textures and the first sword texture.");
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
+		_swordTrail = new Line2D { Name = "SwordTrail", Width = 5, DefaultColor = new Color("78dfff", .42f) };
+		_spiritLine = new Line2D { Name = "SpiritLine", Width = 2, DefaultColor = new Color("8be8ff", .5f) };
+		_swordVisual = new Sprite2D
+		{
+			Name = "Sword01Soulblade", Texture = _swordTexture, Scale = Vector2.One * .075f,
+			Offset = new Vector2(291, 16)
+		};
+		_projectiles.AddChild(_swordTrail);
+		_projectiles.AddChild(_spiritLine);
+		_projectiles.AddChild(_swordVisual);
 	}
 
 	public void Sync(GameSession session, bool menuOpen)
@@ -54,12 +69,47 @@ public partial class WorldPresentation : Node2D
 		UpdateName(session);
 		UpdateFires(session);
 		UpdateEnemies(session);
-		UpdateProjectiles(session);
+		UpdateChests(session);
+		UpdateSword(session);
 		UpdatePlayer(session);
 	}
 
 	private Vector2 Screen(GameSession session, Vector2 world) =>
-		new(GetViewportRect().Size.X / 2 + world.X - session.Player.X, world.Y);
+		new(GetViewportRect().Size.X / 2 + world.X - session.CameraFocus.X, world.Y);
+
+	private void UpdateSword(GameSession session)
+	{
+		var swordScreen = Screen(session, session.SwordPosition);
+		_swordVisual.Position = swordScreen;
+		var targetRotation = session.SwordState == GameSession.SwordMode.Following
+			? -Mathf.Pi / 2
+			: session.SwordVelocity.LengthSquared() > 1 ? session.SwordVelocity.Angle() : _swordVisual.Rotation;
+		if (session.SwordState == GameSession.SwordMode.Returning)
+		{
+			var lift = 1 - Mathf.Clamp(session.SwordFollowDistance / 180, 0, 1);
+			targetRotation = Mathf.LerpAngle(targetRotation, -Mathf.Pi / 2, lift);
+		}
+		_swordVisual.Rotation = Mathf.LerpAngle(_swordVisual.Rotation, targetRotation, .18f);
+
+		if (session.IsSwordInFlight)
+		{
+			_swordTrailPoints.Add(session.SwordPosition);
+			if (_swordTrailPoints.Count > 18) _swordTrailPoints.RemoveAt(0);
+		}
+		else if (_swordTrailPoints.Count > 0) _swordTrailPoints.RemoveAt(0);
+		var trail = new Vector2[_swordTrailPoints.Count];
+		for (var i = 0; i < trail.Length; i++) trail[i] = Screen(session, _swordTrailPoints[i]);
+		_swordTrail.Points = trail;
+		_spiritLine.Visible = session.SwordControlBlend > .01f;
+		if (_spiritLine.Visible)
+		{
+			_spiritLine.Points = new[] { Screen(session, session.Player) + new Vector2(0, -35), swordScreen };
+			var color = session.SwordDistance > 580 ? new Color("ff6670", .8f) : new Color("8be8ff", .5f);
+			color.A *= session.SwordControlBlend;
+			_spiritLine.DefaultColor = color;
+			_spiritLine.Width = Mathf.Lerp(1, 2, session.SwordControlBlend);
+		}
+	}
 
 	private void UpdateGround(Vector2 viewport, float groundY)
 	{
@@ -71,37 +121,17 @@ public partial class WorldPresentation : Node2D
 
 	private void UpdateRoad(Vector2 viewport, GameSession session)
 	{
-		const float tileHeight = 118f;
-		var tileWidth = RoadRegion.Size.X / RoadRegion.Size.Y * tileHeight;
-		var firstTile = Mathf.FloorToInt((session.Player.X - viewport.X / 2) / tileWidth) - 1;
-		var lastTile = Mathf.CeilToInt((session.Player.X + viewport.X / 2) / tileWidth) + 1;
-		var required = lastTile - firstTile + 1;
-		EnsureRoadCount(required);
-		for (var i = 0; i < _road.GetChildCount(); i++)
+		const float horizontalTrim = 256;
+		var scale = viewport.X / _roadTexture.GetWidth();
+		var tileWidth = (_roadTexture.GetWidth() - horizontalTrim * 2) * scale;
+		var offset = session.CameraFocus.X % tileWidth;
+		if (offset < 0) offset += tileWidth;
+		var y = session.GroundY - 392 * scale;
+		for (var i = 0; i < 3; i++)
 		{
 			var sprite = _road.GetChild<Sprite2D>(i);
-			sprite.Visible = i < required;
-			if (!sprite.Visible) continue;
-			var tile = firstTile + i;
-			sprite.Texture = _roadAtlas;
-			sprite.RegionEnabled = true;
-			sprite.RegionRect = RoadRegion;
-			sprite.Centered = false;
-			sprite.Position = new Vector2(viewport.X / 2 + tile * tileWidth - session.Player.X, session.GroundY - 25);
-			sprite.Scale = Vector2.One * (tileHeight / RoadRegion.Size.Y);
-		}
-	}
-
-	private void EnsureRoadCount(int count)
-	{
-		while (_road.GetChildCount() < count)
-		{
-			var sprite = new Sprite2D
-			{
-				Name = $"RoadTile{_road.GetChildCount() + 1:00}", Texture = _roadAtlas,
-				RegionEnabled = true, RegionRect = RoadRegion, Centered = false
-			};
-			_road.AddChild(sprite);
+			sprite.Position = new Vector2(i * tileWidth - offset, y);
+			sprite.Scale = Vector2.One * scale;
 		}
 	}
 
@@ -119,8 +149,8 @@ public partial class WorldPresentation : Node2D
 			sprite.Visible = i < session.Trees.Count && session.IsVisible(session.Trees[i].Position);
 			if (!sprite.Visible) continue;
 			var tree = session.Trees[i];
-			var source = tree.Cut ? TreeStumpRegion : TreeRegions[(int)MathF.Abs(tree.Position.X / 155) % TreeRegions.Length];
-			var scale = tree.Cut ? .28f : .32f;
+			var source = TreeRegions[(int)MathF.Abs(tree.Position.X / 155) % TreeRegions.Length];
+			const float scale = .32f;
 			sprite.Texture = _treeAtlas;
 			sprite.RegionEnabled = true;
 			sprite.Centered = false;
@@ -131,9 +161,35 @@ public partial class WorldPresentation : Node2D
 		}
 	}
 
+	private void UpdateChests(GameSession session)
+	{
+		while (_chestBodies.Count < session.Chests.Count)
+		{
+			var body = new ColorRect { Name = $"ChestBody{_chestBodies.Count + 1:00}", Size = new Vector2(42, 22), Color = new Color("76502f"), ZIndex = 3, MouseFilter = Control.MouseFilterEnum.Ignore };
+			var lid = new ColorRect { Name = $"ChestLid{_chestLids.Count + 1:00}", Size = new Vector2(46, 9), Color = new Color("d8a94f"), ZIndex = 4, MouseFilter = Control.MouseFilterEnum.Ignore };
+			_chests.AddChild(body);
+			_chests.AddChild(lid);
+			_chestBodies.Add(body);
+			_chestLids.Add(lid);
+		}
+		for (var i = 0; i < _chestBodies.Count; i++)
+		{
+			var visible = i < session.Chests.Count && session.IsVisible(session.Chests[i].Position);
+			_chestBodies[i].Visible = visible;
+			_chestLids[i].Visible = visible;
+			if (!visible) continue;
+			var screen = Screen(session, session.Chests[i].Position);
+			_chestBodies[i].Position = screen + new Vector2(-21, -22);
+			_chestLids[i].Position = screen + (session.Chests[i].Searched ? new Vector2(-23, -25) : new Vector2(-23, -31));
+			_chestBodies[i].Color = session.Chests[i].Searched ? new Color("594532") : new Color("76502f");
+			_chestLids[i].Color = session.Chests[i].Searched ? new Color("98734b") : new Color("d8a94f");
+		}
+	}
+
 	private void UpdateMainFire(GameSession session)
 	{
-		var stage = session.Fuel > 75 ? 3 : session.Fuel > 50 ? 2 : session.Fuel > 25 ? 1 : 0;
+		var balance = session.Balance;
+		var stage = session.Fuel > balance.FireStageThreshold3 ? 3 : session.Fuel > balance.FireStageThreshold2 ? 2 : session.Fuel > balance.FireStageThreshold1 ? 1 : 0;
 		if (_mainFireTextures.Count > stage) _mainFire.Texture = _mainFireTextures[stage];
 		_mainFire.Position = Screen(session, session.MainFire) + new Vector2(0, -98);
 		_mainFire.Scale = Vector2.One * (240f / 512f);
@@ -180,11 +236,19 @@ public partial class WorldPresentation : Node2D
 		{
 			var sprite = _enemyVisuals[i];
 			sprite.Visible = i < session.Enemies.Count && session.IsVisible(session.Enemies[i].Position);
+			var damageLabel = _enemyDamageLabels[i];
+			damageLabel.Visible = sprite.Visible && session.Enemies[i].DamageFeedbackTime > 0;
 			if (!sprite.Visible) continue;
 			var enemy = session.Enemies[i];
 			sprite.Texture = _enemyTextures[(int)enemy.Kind * 3 + (int)enemy.VisualState];
 			sprite.Position = Screen(session, enemy.Position) + new Vector2(0, -69);
 			sprite.FlipH = enemy.Position.X > session.Player.X;
+
+			if (!damageLabel.Visible) continue;
+			var progress = 1 - enemy.DamageFeedbackTime / session.Balance.EnemyDamageFeedbackDuration;
+			damageLabel.Text = $"-{enemy.LastDamage:0}";
+			damageLabel.Position = Screen(session, enemy.Position) + new Vector2(-50, -142 - progress * 24);
+			damageLabel.Modulate = new Color(1, 1, 1, Mathf.Clamp(enemy.DamageFeedbackTime * 4, 0, 1));
 		}
 	}
 
@@ -193,36 +257,29 @@ public partial class WorldPresentation : Node2D
 		while (_enemyVisuals.Count < count)
 		{
 			var sprite = new Sprite2D { Name = $"Enemy{_enemyVisuals.Count + 1:00}", Scale = Vector2.One * .48f };
+			var damageLabel = new Label
+			{
+				Name = $"EnemyDamage{_enemyDamageLabels.Count + 1:00}",
+				Size = new Vector2(100, 32),
+				HorizontalAlignment = HorizontalAlignment.Center,
+				MouseFilter = Control.MouseFilterEnum.Ignore,
+				ZIndex = 2
+			};
+			damageLabel.AddThemeFontSizeOverride("font_size", 22);
+			damageLabel.AddThemeColorOverride("font_color", new Color("ffe29a"));
+			damageLabel.AddThemeColorOverride("font_outline_color", new Color("4a1018"));
+			damageLabel.AddThemeConstantOverride("outline_size", 5);
 			_enemies.AddChild(sprite);
+			_enemies.AddChild(damageLabel);
 			_enemyVisuals.Add(sprite);
-		}
-	}
-
-	private void UpdateProjectiles(GameSession session)
-	{
-		EnsureProjectileCount(session.Projectiles.Count);
-		for (var i = 0; i < _projectileVisuals.Count; i++)
-		{
-			var projectile = _projectileVisuals[i];
-			projectile.Visible = i < session.Projectiles.Count && session.IsVisible(session.Projectiles[i].Position);
-			if (projectile.Visible) projectile.Position = Screen(session, session.Projectiles[i].Position) - projectile.Size / 2;
-		}
-	}
-
-	private void EnsureProjectileCount(int count)
-	{
-		while (_projectileVisuals.Count < count)
-		{
-			var projectile = new ColorRect { Name = $"Projectile{_projectileVisuals.Count + 1:00}", Size = new Vector2(12, 12), Color = new Color("ffd05c"), Rotation = Mathf.Pi / 4 };
-			_projectiles.AddChild(projectile);
-			_projectileVisuals.Add(projectile);
+			_enemyDamageLabels.Add(damageLabel);
 		}
 	}
 
 	private void UpdatePlayer(GameSession session)
 	{
-		var moving = _input.Held("left") || _input.Held("right");
-		_player.Present(Screen(session, session.Player), false, session.HurtTime > 0, moving, _input.Held("left"));
+		var moving = _input.Held("left") || _input.Held("right") || session.IsDashing;
+		_player.Present(Screen(session, session.Player), false, session.HurtTime > 0, moving, session.IsDashing, session.PlayerFacing < 0);
 		_axeSwing.Visible = session.SwingTime > 0;
 		if (!_axeSwing.Visible) return;
 		var playerPosition = Screen(session, session.Player);

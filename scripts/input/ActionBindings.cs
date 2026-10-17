@@ -6,10 +6,11 @@ public partial class ActionBindings : Node
 {
 	public static readonly (string Action, string Label)[] Definitions =
 	{
-		("left", "向左移动"), ("right", "向右移动"), ("jump", "跳跃"), ("axe", "挥斧攻击"),
-		("firebolt", "火种攻击"), ("chop", "砍伐树木"), ("feed", "添入主火"), ("upgrade", "升级主火"),
-		("torch", "放置火把"), ("campfire", "放置野营火"), ("burn_name", "燃烧名字"),
-		("return_name", "归还名字"), ("restart", "重燃循环")
+		("left", "向左移动"), ("right", "向右移动"), ("jump", "跳跃"),
+		("dash", "突进（闪避）"), ("sword_control", "切换御剑/归剑"), ("switch_sword", "切换剑胚"),
+		("axe", "飞剑攻击"), ("search", "搜刮宝箱/尸体"), ("feed", "补充剑冢灵蕴"),
+		("upgrade", "升级剑冢"), ("torch", "放置剑标"), ("campfire", "布置临时剑阵"),
+		("burn_name", "强炼剑铭"), ("return_name", "归葬剑铭"), ("restart", "重启远征"), ("inventory", "打开背包")
 	};
 
 	private readonly Dictionary<string, Binding> _bindings = new();
@@ -29,7 +30,12 @@ public partial class ActionBindings : Node
 			AddPressedAction(binding => binding.Mouse == mouse.ButtonIndex);
 	}
 
-	public bool Held(string action) => _bindings[action].Key is Key key && Input.IsKeyPressed(key);
+	public bool Held(string action)
+	{
+		var binding = _bindings[action];
+		return binding.Key is Key key && Input.IsKeyPressed(key)
+			|| binding.Mouse is MouseButton mouse && Input.IsMouseButtonPressed(mouse);
+	}
 	public bool Pressed(string action) => _pressedActions.Remove(action);
 	public string LabelFor(string action) => _bindings[action].Label;
 
@@ -52,10 +58,12 @@ public partial class ActionBindings : Node
 	private void SetDefaults()
 	{
 		_bindings["left"] = new Binding(Key.A); _bindings["right"] = new Binding(Key.D); _bindings["jump"] = new Binding(Key.W);
-		_bindings["axe"] = new Binding(MouseButton.Left); _bindings["firebolt"] = new Binding(MouseButton.Right);
-		_bindings["chop"] = new Binding(Key.F); _bindings["feed"] = new Binding(Key.E); _bindings["upgrade"] = new Binding(Key.U);
+		_bindings["dash"] = new Binding(Key.Shift); _bindings["sword_control"] = new Binding(MouseButton.Right);
+		_bindings["switch_sword"] = new Binding(Key.Tab);
+		_bindings["axe"] = new Binding(MouseButton.Left);
+		_bindings["search"] = new Binding(Key.F); _bindings["feed"] = new Binding(Key.E); _bindings["upgrade"] = new Binding(Key.U);
 		_bindings["torch"] = new Binding(Key.Q); _bindings["campfire"] = new Binding(Key.C); _bindings["burn_name"] = new Binding(Key.B);
-		_bindings["return_name"] = new Binding(Key.G); _bindings["restart"] = new Binding(Key.Enter);
+		_bindings["return_name"] = new Binding(Key.G); _bindings["restart"] = new Binding(Key.Enter); _bindings["inventory"] = new Binding(Key.I);
 	}
 
 	private void Load()
@@ -64,10 +72,16 @@ public partial class ActionBindings : Node
 		if (config.Load("user://controls.cfg") != Error.Ok) return;
 		foreach (var (action, _) in Definitions)
 		{
-			var keyName = config.GetValue("controls", action + "_key", "").AsString();
-			var mouseName = config.GetValue("controls", action + "_mouse", "").AsString();
+			var legacyAction = action == "search" ? "chop" : action;
+			var keyName = config.GetValue("controls", action + "_key", config.GetValue("controls", legacyAction + "_key", "")).AsString();
+			var mouseName = config.GetValue("controls", action + "_mouse", config.GetValue("controls", legacyAction + "_mouse", "")).AsString();
 			if (Enum.TryParse<Key>(keyName, out var key)) _bindings[action] = new Binding(key);
 			if (Enum.TryParse<MouseButton>(mouseName, out var mouse)) _bindings[action] = new Binding(mouse);
+		}
+		if (_bindings["sword_control"].Key == Key.Shift)
+		{
+			_bindings["sword_control"] = new Binding(MouseButton.Right);
+			Save();
 		}
 	}
 

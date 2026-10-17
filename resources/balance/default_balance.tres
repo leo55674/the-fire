@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="BalanceConfig" format=3 uid="uid://cfewfvekymwol"]
+
+[ext_resource type="Script" uid="uid://06u5843d2e6n" path="res://scripts/gameplay/BalanceConfig.gd" id="1_balance"]
+
+[resource]
+script = ExtResource("1_balance")
+max_health = 50.0
