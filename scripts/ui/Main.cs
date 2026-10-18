@@ -10,16 +10,14 @@ public partial class Main : Node2D
 	};
 	private Texture2D _menuButtonNormal;
 	private Texture2D _menuButtonSelected;
-	private Texture2D _settingsPageFrame;
 	private Texture2D _settingsIcon;
-	private Texture2D _displayIcon;
-	private Texture2D _fullscreenIcon;
 	private Texture2D _closeIcon;
 	private Texture2D _statusBarsAtlas;
 	private SystemFont _uiFont;
 	[Export] private ActionBindings _input;
 	[Export] private GameSession _session;
 	[Export] private WorldPresentation _worldPresentation;
+	[Export] private SettingsView _settingsView;
 	[Export] private TextureRect _titleBackdropView;
 	[Export] private TextureRect _gameBackdropView;
 	[Export] private Control _mainMenuView;
@@ -43,17 +41,15 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
-		if (_input == null || _session == null || _worldPresentation == null)
+		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null)
 			throw new InvalidOperationException("Main requires ActionBindings, GameSession, and WorldPresentation nodes.");
 		_menuButtonNormal = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png");
 		_menuButtonSelected = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_selected.png");
-		_settingsPageFrame = GD.Load<Texture2D>("res://assets/art/runtime/ui/frames/ui_settings_page_frame.png");
 		_settingsIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_settings.png");
-		_displayIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_display.png");
-		_fullscreenIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_fullscreen.png");
 		_closeIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_close.png");
 		_statusBarsAtlas = GD.Load<Texture2D>("res://assets/art/runtime/ui/frames/ui_status_bars_atlas.png");
 		_uiFont = new SystemFont { FontNames = new[] { "Microsoft YaHei", "SimHei" } };
+		_settingsView.Input = _input;
 		LoadSettings();
 		_session.Initialize(GroundY);
 		SyncScreenState();
@@ -108,9 +104,9 @@ public partial class Main : Node2D
 			if (_settingsOpen)
 			{
 				if (!mouseEvent.Pressed) { CloseVolumeDrag(); return; }
-				if (mouseEvent.ButtonIndex == MouseButton.Left && SettingsCloseButton().HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _editingAction = null; _settingsOpen = false; SyncScreenState(); QueueRedraw(); return; }
+				if (mouseEvent.ButtonIndex == MouseButton.Left && _settingsView.SettingsCloseButton().HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _editingAction = null; _settingsOpen = false; SyncScreenState(); QueueRedraw(); return; }
 				for (var i = 0; i < 2; i++)
-					if (mouseEvent.ButtonIndex == MouseButton.Left && SettingsTab(i).HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _settingsTab = i; _editingAction = null; QueueRedraw(); return; }
+					if (mouseEvent.ButtonIndex == MouseButton.Left && _settingsView.SettingsTab(i).HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _settingsTab = i; _editingAction = null; QueueRedraw(); return; }
 				if (_editingAction != null) { _input.Rebind(_editingAction, mouseEvent.ButtonIndex); _editingAction = null; }
 				else SelectSettingRow(mouseEvent.Position, mouseEvent.ButtonIndex);
 				QueueRedraw();
@@ -154,7 +150,7 @@ public partial class Main : Node2D
 	}
 	private void SetMasterVolumeFromMouse(float mouseX)
 	{
-		var track = VolumeTrack();
+		var track = _settingsView.VolumeTrack();
 		_masterVolume = Mathf.Clamp((mouseX - track.Position.X) / track.Size.X, 0, 1);
 		ApplyMasterVolume();
 	}
@@ -183,17 +179,17 @@ public partial class Main : Node2D
 	{
 		if (_settingsTab == 0)
 		{
-			if (button == MouseButton.Left && ResolutionRow().HasPoint(mouse)) CycleResolution();
+			if (button == MouseButton.Left && _settingsView.ResolutionRow().HasPoint(mouse)) CycleResolution();
 			else
 			{
-				var track = VolumeTrack();
-				var hitArea = new Rect2(track.Position.X, VolumeRow().Position.Y, track.Size.X, VolumeRow().Size.Y);
+				var track = _settingsView.VolumeTrack();
+				var hitArea = new Rect2(track.Position.X, _settingsView.VolumeRow().Position.Y, track.Size.X, _settingsView.VolumeRow().Size.Y);
 				if (button == MouseButton.Left && hitArea.HasPoint(mouse)) { _draggingVolume = true; SetMasterVolumeFromMouse(mouse.X); }
 			}
 			return;
 		}
 		for (var i = 0; i < ActionBindings.Definitions.Length; i++)
-			if (SettingRow(i).HasPoint(mouse)) { _editingAction = ActionBindings.Definitions[i].Action; return; }
+			if (_settingsView.SettingRow(i).HasPoint(mouse)) { _editingAction = ActionBindings.Definitions[i].Action; return; }
 	}
 
 	private Rect2 MenuButton(int index)
@@ -240,6 +236,12 @@ public partial class Main : Node2D
 		_gameBackdropView.Visible = !_mainMenuOpen;
 		_worldPresentation.Visible = !_mainMenuOpen;
 		_mainMenuView.Visible = _mainMenuOpen && !_settingsOpen;
+		_settingsView.Visible = _settingsOpen;
+		_settingsView.Tab = _settingsTab;
+		_settingsView.EditingAction = _editingAction;
+		_settingsView.Resolution = Resolutions[_resolutionIndex];
+		_settingsView.MasterVolume = _masterVolume;
+		_settingsView.QueueRedraw();
 		if (!_mainMenuOpen) _worldPresentation.Sync(_session, false);
 		QueueRedraw();
 	}
@@ -248,11 +250,7 @@ public partial class Main : Node2D
 	{
 		var size = GetViewportRect().Size;
 		if (_mainMenuOpen) UpdateMenuView();
-		if (_mainMenuOpen)
-		{
-			if (_settingsOpen) DrawSettings(size);
-			return;
-		}
+		if (_mainMenuOpen) return;
 		DrawHud(size);
 	}
 }

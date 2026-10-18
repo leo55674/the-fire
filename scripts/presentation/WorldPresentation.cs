@@ -13,7 +13,7 @@ public partial class WorldPresentation : Node2D
 	[Export] private Texture2D _treeAtlas;
 	[Export] private Texture2D _swordTexture;
 	[Export] private Godot.Collections.Array<Texture2D> _mainFireTextures;
-	[Export] private Godot.Collections.Array<Texture2D> _enemyTextures;
+	[Export] private PackedScene _enemyScene;
 	[Export] private ActionBindings _input;
 	[Export] private Node2D _road;
 	[Export] private Polygon2D _ground;
@@ -29,8 +29,7 @@ public partial class WorldPresentation : Node2D
 
 	private readonly List<Sprite2D> _treeVisuals = new();
 	private readonly List<Sprite2D> _fireVisuals = new();
-	private readonly List<Sprite2D> _enemyVisuals = new();
-	private readonly List<Label> _enemyDamageLabels = new();
+	private readonly List<EnemyPresentation> _enemyVisuals = new();
 	private readonly List<ColorRect> _chestBodies = new();
 	private readonly List<ColorRect> _chestLids = new();
 	private readonly List<Vector2> _swordTrailPoints = new();
@@ -43,7 +42,7 @@ public partial class WorldPresentation : Node2D
 
 	public override void _Ready()
 	{
-		if (_enemyTextures == null || _enemyTextures.Count != 9 || _swordTexture == null)
+		if (_enemyScene == null || _swordTexture == null)
 			throw new InvalidOperationException("WorldPresentation requires enemy state textures and the first sword texture.");
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
@@ -267,20 +266,10 @@ public partial class WorldPresentation : Node2D
 		for (var i = 0; i < _enemyVisuals.Count; i++)
 		{
 			var sprite = _enemyVisuals[i];
-			sprite.Visible = i < session.Enemies.Count && session.IsVisible(session.Enemies[i].Position);
-			var damageLabel = _enemyDamageLabels[i];
-			damageLabel.Visible = sprite.Visible && session.Enemies[i].DamageFeedbackTime > 0;
+			sprite.Visible = i < session.Enemies.Count;
 			if (!sprite.Visible) continue;
 			var enemy = session.Enemies[i];
-			sprite.Texture = _enemyTextures[(int)enemy.Kind * 3 + (int)enemy.VisualState];
-			sprite.Position = Screen(session, enemy.Position) + new Vector2(0, -69);
-			sprite.FlipH = enemy.Position.X > session.Player.X;
-
-			if (!damageLabel.Visible) continue;
-			var progress = 1 - enemy.DamageFeedbackTime / session.Balance.EnemyDamageFeedbackDuration;
-			damageLabel.Text = $"-{enemy.LastDamage:0}";
-			damageLabel.Position = Screen(session, enemy.Position) + new Vector2(-50, -142 - progress * 24);
-			damageLabel.Modulate = new Color(1, 1, 1, Mathf.Clamp(enemy.DamageFeedbackTime * 4, 0, 1));
+			sprite.Present(enemy, session, Screen(session, enemy.Position));
 		}
 	}
 
@@ -288,23 +277,10 @@ public partial class WorldPresentation : Node2D
 	{
 		while (_enemyVisuals.Count < count)
 		{
-			var sprite = new Sprite2D { Name = $"Enemy{_enemyVisuals.Count + 1:00}", Scale = Vector2.One * .48f };
-			var damageLabel = new Label
-			{
-				Name = $"EnemyDamage{_enemyDamageLabels.Count + 1:00}",
-				Size = new Vector2(100, 32),
-				HorizontalAlignment = HorizontalAlignment.Center,
-				MouseFilter = Control.MouseFilterEnum.Ignore,
-				ZIndex = 2
-			};
-			damageLabel.AddThemeFontSizeOverride("font_size", 22);
-			damageLabel.AddThemeColorOverride("font_color", new Color("ffe29a"));
-			damageLabel.AddThemeColorOverride("font_outline_color", new Color("4a1018"));
-			damageLabel.AddThemeConstantOverride("outline_size", 5);
+			var sprite = _enemyScene.Instantiate<EnemyPresentation>();
+			sprite.Name = $"Enemy{_enemyVisuals.Count + 1:00}";
 			_enemies.AddChild(sprite);
-			_enemies.AddChild(damageLabel);
 			_enemyVisuals.Add(sprite);
-			_enemyDamageLabels.Add(damageLabel);
 		}
 	}
 

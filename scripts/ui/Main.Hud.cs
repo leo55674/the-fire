@@ -34,7 +34,6 @@ public partial class Main : Node2D
 		if (!string.IsNullOrEmpty(_session.SearchPrompt)) DrawSearchPrompt(size);
 		if (_session.InventoryOpen) DrawInventory(size);
 		if (_session.ComboOpen) DrawCombo(size);
-		if (_settingsOpen) DrawSettings(size);
 	}
 
 	private void DrawStatusBar(Rect2 rect, Rect2 frameRegion, Rect2 fillRegion, float value, float maximum)

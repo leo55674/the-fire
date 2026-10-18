@@ -4,4 +4,3 @@
 
 [resource]
 script = ExtResource("1_balance")
-max_health = 50.0

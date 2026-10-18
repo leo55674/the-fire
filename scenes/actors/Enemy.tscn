@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/EnemyPresentation.cs" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_hunter_normal.png" id="2_hunter_normal"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_hunter_hurt.png" id="3_hunter_hurt"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_hunter_dead.png" id="4_hunter_dead"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_normal.png" id="5_extinguisher_normal"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_hurt.png" id="6_extinguisher_hurt"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_dead.png" id="7_extinguisher_dead"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_thief_normal.png" id="8_thief_normal"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_thief_hurt.png" id="9_thief_hurt"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/enemies/enemy_thief_dead.png" id="10_thief_dead"]
+
+[node name="Enemy" type="Node2D" node_paths=PackedStringArray("_sprite", "_damageLabel")]
+script = ExtResource("1_enemy")
+_sprite = NodePath("Sprite")
+_damageLabel = NodePath("DamageLabel")
+_textures = Array[Texture2D]([ExtResource("2_hunter_normal"), ExtResource("3_hunter_hurt"), ExtResource("4_hunter_dead"), ExtResource("5_extinguisher_normal"), ExtResource("6_extinguisher_hurt"), ExtResource("7_extinguisher_dead"), ExtResource("8_thief_normal"), ExtResource("9_thief_hurt"), ExtResource("10_thief_dead")])
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.48, 0.48)
+
+[node name="DamageLabel" type="Label" parent="."]
+visible = false
+z_index = 2
+offset_left = -50.0
+offset_top = -73.0
+offset_right = 50.0
+offset_bottom = -41.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.886275, 0.603922, 1)
+theme_override_colors/font_outline_color = Color(0.290196, 0.0627451, 0.0941176, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1

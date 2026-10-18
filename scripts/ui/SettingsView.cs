@@ -3,8 +3,30 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class Main : Node2D
+public partial class SettingsView : Control
 {
+	public ActionBindings Input { get; set; }
+	private Texture2D _settingsPageFrame;
+	private Texture2D _settingsIcon;
+	private Texture2D _displayIcon;
+	private Texture2D _fullscreenIcon;
+	private Texture2D _closeIcon;
+	private SystemFont _uiFont;
+	public int Tab { get; set; }
+	public string EditingAction { get; set; }
+	public Vector2I Resolution { get; set; }
+	public float MasterVolume { get; set; }
+
+	public override void _Ready()
+	{
+		_settingsPageFrame = GD.Load<Texture2D>("res://assets/art/runtime/ui/frames/ui_settings_page_frame.png");
+		_settingsIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_settings.png");
+		_displayIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_display.png");
+		_fullscreenIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_fullscreen.png");
+		_closeIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_close.png");
+		_uiFont = new SystemFont { FontNames = new[] { "Microsoft YaHei", "SimHei" } };
+		MouseFilter = MouseFilterEnum.Ignore;
+	}
 	private Rect2 SettingsPanel()
 	{
 		var viewport = GetViewportRect().Size;
@@ -20,7 +42,7 @@ public partial class Main : Node2D
 		return new Rect2(panel.Position + panel.Size * new Vector2(.2f, .18f), panel.Size * new Vector2(.6f, .64f));
 	}
 
-	private Rect2 SettingsTab(int index)
+	public Rect2 SettingsTab(int index)
 	{
 		var content = SettingsContent();
 		var width = (content.Size.X - 8) / 2;
@@ -28,34 +50,35 @@ public partial class Main : Node2D
 	}
 
 	private float SettingsRowHeight() => Mathf.Clamp(Mathf.Floor((SettingsContent().Size.Y - 154) / ActionBindings.Definitions.Length), 17, 28);
-	private Rect2 ResolutionRow()
+	public Rect2 ResolutionRow()
 	{
 		var content = SettingsContent();
 		return new Rect2(content.Position + new Vector2(0, 112), new Vector2(content.Size.X, 48));
 	}
-	private Rect2 VolumeRow() => new(ResolutionRow().Position + new Vector2(0, 58), ResolutionRow().Size);
-	private Rect2 VolumeTrack()
+	public Rect2 VolumeRow() => new(ResolutionRow().Position + new Vector2(0, 58), ResolutionRow().Size);
+	public Rect2 VolumeTrack()
 	{
 		var row = VolumeRow();
 		return new Rect2(row.Position + new Vector2(row.Size.X * .4f, row.Size.Y / 2 - 3), new Vector2(row.Size.X * .42f, 6));
 	}
 
-	private Rect2 SettingRow(int index)
+	public Rect2 SettingRow(int index)
 	{
 		var content = SettingsContent();
 		var height = SettingsRowHeight();
 		return new Rect2(content.Position + new Vector2(0, 112 + index * height), new Vector2(content.Size.X, height - 2));
 	}
 
-	private Rect2 SettingsCloseButton()
+	public Rect2 SettingsCloseButton()
 	{
 		var content = SettingsContent();
 		const int size = 40;
 		return new Rect2(content.End.X - size, content.Position.Y + 4, size, size);
 	}
 
-	private void DrawSettings(Vector2 size)
+	public override void _Draw()
 	{
+		var size = GetViewportRect().Size;
 		var panel = SettingsPanel();
 		var content = SettingsContent();
 		var font = _uiFont ?? ThemeDB.FallbackFont;
@@ -72,20 +95,20 @@ public partial class Main : Node2D
 		for (var i = 0; i < 2; i++)
 		{
 			var tab = SettingsTab(i);
-			var selected = _settingsTab == i;
+			var selected = Tab == i;
 			DrawRect(tab, selected ? new Color("825e35", .92f) : new Color("101824", .76f));
 			DrawRect(tab, selected ? new Color("ffd285") : new Color("53616f"), false, 1);
 			DrawString(font, tab.Position + new Vector2(0, 24), i == 0 ? "音频与显示" : "按键绑定", HorizontalAlignment.Center, tab.Size.X, 16, selected ? new Color("ffe0a0") : new Color("b8c2cc"));
 		}
-		DrawString(font, content.Position + new Vector2(0, 106), _settingsTab == 0 ? "点击分辨率切换，拖动滑块调整全局音量" : _editingAction == null ? "点击操作后按下新按键" : "请按下新的按键或鼠标键", HorizontalAlignment.Left, content.Size.X, helpSize, new Color("d2d8df"));
-		if (_settingsTab == 0) DrawGeneralSettings(font);
+		DrawString(font, content.Position + new Vector2(0, 106), Tab == 0 ? "点击分辨率切换，拖动滑块调整全局音量" : EditingAction == null ? "点击操作后按下新按键" : "请按下新的按键或鼠标键", HorizontalAlignment.Left, content.Size.X, helpSize, new Color("d2d8df"));
+		if (Tab == 0) DrawGeneralSettings(font);
 		else DrawBindingSettings(font);
 		DrawString(font, new Vector2(content.Position.X, content.End.Y - 8), "Tab 切换分页  ·  F1 / Esc 关闭  ·  修改自动保存", HorizontalAlignment.Center, content.Size.X, helpSize, new Color("b8c2cc"));
 	}
 
 	private void DrawGeneralSettings(Font font)
 	{
-		var resolution = Resolutions[_resolutionIndex];
+		var resolution = Resolution;
 		var resolutionRow = ResolutionRow();
 		var rowFontSize = Mathf.Clamp(Mathf.RoundToInt(resolutionRow.Size.Y * .62f), 13, 18);
 		var baseline = resolutionRow.Size.Y / 2 + rowFontSize * .35f;
@@ -100,21 +123,21 @@ public partial class Main : Node2D
 		DrawRect(volumeRow, new Color("101824", .78f));
 		DrawString(font, volumeRow.Position + new Vector2(12, baseline), "主音量", HorizontalAlignment.Left, volumeRow.Size.X * .34f, rowFontSize, Colors.White);
 		DrawRect(track, new Color("394959"));
-		DrawRect(new Rect2(track.Position, new Vector2(track.Size.X * _masterVolume, track.Size.Y)), new Color("d9a75c"));
-		DrawCircle(new Vector2(track.Position.X + track.Size.X * _masterVolume, track.GetCenter().Y), 8, new Color("ffe0a0"));
-		DrawString(font, volumeRow.Position + new Vector2(volumeRow.Size.X * .85f, baseline), $"{Mathf.RoundToInt(_masterVolume * 100)}%", HorizontalAlignment.Right, volumeRow.Size.X * .11f, rowFontSize, new Color("ffd285"));
+		DrawRect(new Rect2(track.Position, new Vector2(track.Size.X * MasterVolume, track.Size.Y)), new Color("d9a75c"));
+		DrawCircle(new Vector2(track.Position.X + track.Size.X * MasterVolume, track.GetCenter().Y), 8, new Color("ffe0a0"));
+		DrawString(font, volumeRow.Position + new Vector2(volumeRow.Size.X * .85f, baseline), $"{Mathf.RoundToInt(MasterVolume * 100)}%", HorizontalAlignment.Right, volumeRow.Size.X * .11f, rowFontSize, new Color("ffd285"));
 	}
 
 	private void DrawBindingSettings(Font font)
 	{
 		for (var i = 0; i < ActionBindings.Definitions.Length; i++)
 		{
-			var (action, label) = ActionBindings.Definitions[i]; var row = SettingRow(i); var selected = _editingAction == action;
+			var (action, label) = ActionBindings.Definitions[i]; var row = SettingRow(i); var selected = EditingAction == action;
 			var fontSize = Mathf.Clamp(Mathf.RoundToInt(row.Size.Y * .66f), 13, 18);
 			var textY = row.Size.Y / 2 + fontSize * .35f;
 			DrawRect(row, selected ? new Color("825e35", .88f) : new Color("101824", .72f));
 			DrawString(font, row.Position + new Vector2(12, textY), label, HorizontalAlignment.Left, row.Size.X * .52f, fontSize, Colors.White);
-			DrawString(font, row.Position + new Vector2(row.Size.X * .58f, textY), _input.LabelFor(action), HorizontalAlignment.Left, row.Size.X * .36f, fontSize, new Color("ffd285"));
+			DrawString(font, row.Position + new Vector2(row.Size.X * .58f, textY), Input.LabelFor(action), HorizontalAlignment.Left, row.Size.X * .36f, fontSize, new Color("ffd285"));
 		}
 	}
 }

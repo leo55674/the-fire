@@ -1,0 +1,11 @@
+Use case: lighting-weather
+Asset type: side-scrolling pixel-game concept art color-grade revision
+Input: exec-6b5a6881-c497-4fdf-9eb6-65753f87fc08.png
+
+Adjust only color grading, saturation, brightness, and highlight intensity. Reduce overall saturation by roughly 30%, lower exposure and midtone brightness, replace the bright pink-orange horizon with muted mauve, slate violet, and twilight blue, and make the aurora thinner and less saturated. Darken the cloud sea to blue-gray and smoky indigo, compress white highlights, and retain controlled ember-orange firelight as the only strong warm focal accent.
+
+Preserve the exact composition, continuous road, 80/20 ground-to-cloud layout, characters, poses, buildings, forest, mountains, castle, moon, aurora geometry, camera, pixel clusters, and all object placement.
+
+Avoid geometry changes, new or removed objects, neon colors, saturated magenta or cyan, blown highlights, crushed blacks, blur, text, logos, watermarks, and UI.
+
+Generation method: OpenAI built-in ImageGen, color-only edit from the supplied visual reference.

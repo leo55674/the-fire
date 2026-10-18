@@ -14,15 +14,6 @@
 [ext_resource type="Texture2D" uid="uid://diat28r0j1w0h" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_high.png" id="12_fire_high"]
 [ext_resource type="Texture2D" uid="uid://dqlmrhuddv031" path="res://assets/art/runtime/environment/props/main_fire/main_fire_fuel_blazing.png" id="13_fire_blazing"]
 [ext_resource type="Texture2D" uid="uid://b2qy2ni1f5fo4" path="res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png" id="14_button"]
-[ext_resource type="Texture2D" uid="uid://dxnuo1ei8h8us" path="res://assets/art/runtime/characters/enemies/enemy_hunter_normal.png" id="15_hunter_normal"]
-[ext_resource type="Texture2D" uid="uid://b6vbh3leguadj" path="res://assets/art/runtime/characters/enemies/enemy_hunter_hurt.png" id="16_hunter_hurt"]
-[ext_resource type="Texture2D" uid="uid://mk01cgh3eo35" path="res://assets/art/runtime/characters/enemies/enemy_hunter_dead.png" id="17_hunter_dead"]
-[ext_resource type="Texture2D" uid="uid://ct6r45wnhlilr" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_normal.png" id="18_extinguisher_normal"]
-[ext_resource type="Texture2D" uid="uid://dadqxfp0mianv" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_hurt.png" id="19_extinguisher_hurt"]
-[ext_resource type="Texture2D" uid="uid://cgms27yedil2j" path="res://assets/art/runtime/characters/enemies/enemy_extinguisher_dead.png" id="20_extinguisher_dead"]
-[ext_resource type="Texture2D" uid="uid://bswo8l0ujl23r" path="res://assets/art/runtime/characters/enemies/enemy_thief_normal.png" id="21_thief_normal"]
-[ext_resource type="Texture2D" uid="uid://cr86cmp8q61ck" path="res://assets/art/runtime/characters/enemies/enemy_thief_hurt.png" id="22_thief_hurt"]
-[ext_resource type="Texture2D" uid="uid://oc405gy2qgd1" path="res://assets/art/runtime/characters/enemies/enemy_thief_dead.png" id="23_thief_dead"]
 [ext_resource type="Script" uid="uid://dm7fk4kngu72p" path="res://scripts/presentation/AudioDirector.cs" id="24_audio"]
 [ext_resource type="AudioStream" uid="uid://dr8c03rumhyme" path="res://assets/audio/music/bgm_sword_tomb_rust_mist_loop.wav" id="25_music"]
 [ext_resource type="AudioStream" uid="uid://biyy0xldr8n68" path="res://assets/audio/sfx/combat/sfx_sword_launch.wav" id="26_launch"]
@@ -35,6 +26,8 @@
 [ext_resource type="AudioStream" uid="uid://cti65dmjklmp" path="res://assets/audio/sfx/sword/sfx_sword_return.wav" id="33_return"]
 [ext_resource type="AudioStream" uid="uid://dl15bw3x212yw" path="res://assets/audio/sfx/sword/sfx_sword_frame_switch.wav" id="34_switch"]
 [ext_resource type="Resource" uid="uid://cfewfvekymwol" path="res://resources/balance/default_balance.tres" id="35_balance"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Enemy.tscn" id="36_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/Settings.tscn" id="37_settings"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tree_1"]
 atlas = ExtResource("9_trees")
@@ -48,11 +41,12 @@ region = Rect2(388, 44, 298, 574)
 atlas = ExtResource("9_trees")
 region = Rect2(714, 126, 288, 490)
 
-[node name="TheFire" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView")]
+[node name="TheFire" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView")]
 script = ExtResource("1_main")
 _input = NodePath("ActionBindings")
 _session = NodePath("GameSession")
 _worldPresentation = NodePath("World")
+_settingsView = NodePath("Interface/Settings")
 _titleBackdropView = NodePath("Background/TitleBackdrop")
 _gameBackdropView = NodePath("Background/GameBackdrop")
 _mainMenuView = NodePath("Interface/MainMenu")
@@ -150,7 +144,7 @@ _roadTexture = ExtResource("8_road")
 _treeAtlas = ExtResource("9_trees")
 _swordTexture = ExtResource("29_sword_01")
 _mainFireTextures = Array[Texture2D]([ExtResource("10_fire_low"), ExtResource("11_fire_medium"), ExtResource("12_fire_high"), ExtResource("13_fire_blazing")])
-_enemyTextures = Array[Texture2D]([ExtResource("15_hunter_normal"), ExtResource("16_hunter_hurt"), ExtResource("17_hunter_dead"), ExtResource("18_extinguisher_normal"), ExtResource("19_extinguisher_hurt"), ExtResource("20_extinguisher_dead"), ExtResource("21_thief_normal"), ExtResource("22_thief_hurt"), ExtResource("23_thief_dead")])
+_enemyScene = ExtResource("36_enemy")
 _input = NodePath("../ActionBindings")
 _road = NodePath("Environment/Road")
 _ground = NodePath("Environment/Ground")
@@ -250,6 +244,8 @@ z_index = 5
 
 [node name="Interface" type="CanvasLayer" parent="." unique_id=1238356454]
 layer = 10
+
+[node name="Settings" parent="Interface" instance=ExtResource("37_settings")]
 
 [node name="MainMenu" type="Control" parent="Interface" unique_id=424085361]
 layout_mode = 3
