@@ -13,7 +13,7 @@ public partial class WorldPresentation : Node2D
 	[Export] private Texture2D _treeAtlas;
 	[Export] private Texture2D _swordTexture;
 	[Export] private Godot.Collections.Array<Texture2D> _mainFireTextures;
-	[Export] private PackedScene _enemyScene;
+	[Export] private Godot.Collections.Array<PackedScene> _enemyScenes;
 	[Export] private ActionBindings _input;
 	[Export] private Node2D _road;
 	[Export] private Polygon2D _ground;
@@ -42,8 +42,8 @@ public partial class WorldPresentation : Node2D
 
 	public override void _Ready()
 	{
-		if (_enemyScene == null || _swordTexture == null)
-			throw new InvalidOperationException("WorldPresentation requires enemy state textures and the first sword texture.");
+		if (_enemyScenes == null || _enemyScenes.Count != 3 || _enemyScenes[0] == null || _enemyScenes[1] == null || _enemyScenes[2] == null || _swordTexture == null)
+			throw new InvalidOperationException("WorldPresentation requires three enemy scenes and the first sword texture.");
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
 		_swordTrail = new Line2D { Name = "SwordTrail", Width = 5, DefaultColor = new Color("78dfff", .42f) };
@@ -262,25 +262,38 @@ public partial class WorldPresentation : Node2D
 
 	private void UpdateEnemies(GameSession session)
 	{
-		EnsureEnemyCount(session.Enemies.Count);
+		EnsureEnemyCount(session);
 		for (var i = 0; i < _enemyVisuals.Count; i++)
 		{
-			var sprite = _enemyVisuals[i];
-			sprite.Visible = i < session.Enemies.Count;
-			if (!sprite.Visible) continue;
 			var enemy = session.Enemies[i];
-			sprite.Present(enemy, session, Screen(session, enemy.Position));
+			_enemyVisuals[i].Present(enemy, session, Screen(session, enemy.Position));
 		}
 	}
 
-	private void EnsureEnemyCount(int count)
+	private void EnsureEnemyCount(GameSession session)
 	{
-		while (_enemyVisuals.Count < count)
+		while (_enemyVisuals.Count > session.Enemies.Count)
 		{
-			var sprite = _enemyScene.Instantiate<EnemyPresentation>();
-			sprite.Name = $"Enemy{_enemyVisuals.Count + 1:00}";
+			var last = _enemyVisuals[^1];
+			_enemies.RemoveChild(last);
+			last.QueueFree();
+			_enemyVisuals.RemoveAt(_enemyVisuals.Count - 1);
+		}
+		for (var i = 0; i < session.Enemies.Count; i++)
+		{
+			var kind = session.Enemies[i].Kind;
+			if (i < _enemyVisuals.Count && _enemyVisuals[i].Kind == kind) continue;
+			if (i < _enemyVisuals.Count)
+			{
+				var old = _enemyVisuals[i];
+				_enemies.RemoveChild(old);
+				old.QueueFree();
+			}
+			var sprite = _enemyScenes[(int)kind].Instantiate<EnemyPresentation>();
+			sprite.Name = $"Enemy{i + 1:00}";
 			_enemies.AddChild(sprite);
-			_enemyVisuals.Add(sprite);
+			if (i < _enemyVisuals.Count) _enemyVisuals[i] = sprite;
+			else _enemyVisuals.Add(sprite);
 		}
 	}
 

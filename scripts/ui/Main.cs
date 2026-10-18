@@ -241,7 +241,7 @@ public partial class Main : Node2D
 		_settingsView.EditingAction = _editingAction;
 		_settingsView.Resolution = Resolutions[_resolutionIndex];
 		_settingsView.MasterVolume = _masterVolume;
-		_settingsView.QueueRedraw();
+		_settingsView.Refresh();
 		if (!_mainMenuOpen) _worldPresentation.Sync(_session, false);
 		QueueRedraw();
 	}
