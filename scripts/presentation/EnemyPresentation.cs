@@ -5,11 +5,11 @@ public partial class EnemyPresentation : Node2D
 {
 	[Export] private Sprite2D _sprite;
 	[Export] private Label _damageLabel;
-	[Export] private GameSession.EnemyKind _kind;
+	[Export] private EnemySystem.EnemyKind _kind;
 	[Export] private Texture2D _normalTexture;
 	[Export] private Texture2D _hurtTexture;
 	[Export] private Texture2D _deadTexture;
-	public GameSession.EnemyKind Kind => _kind;
+	public EnemySystem.EnemyKind Kind => _kind;
 
 	public override void _Ready()
 	{
@@ -17,15 +17,15 @@ public partial class EnemyPresentation : Node2D
 			throw new InvalidOperationException("Enemy scene requires its sprite, damage label, and three state textures.");
 	}
 
-	public void Present(GameSession.EnemyState enemy, GameSession session, Vector2 screenPosition)
+	public void Present(EnemySystem.EnemyState enemy, GameSession session, Vector2 screenPosition)
 	{
 		Visible = session.IsVisible(enemy.Position);
 		if (!Visible) return;
 		Position = screenPosition;
 		_sprite.Texture = enemy.VisualState switch
 		{
-			GameSession.EnemyVisualState.Hurt => _hurtTexture,
-			GameSession.EnemyVisualState.Dead => _deadTexture,
+			EnemySystem.EnemyVisualState.Hurt => _hurtTexture,
+			EnemySystem.EnemyVisualState.Dead => _deadTexture,
 			_ => _normalTexture
 		};
 		_sprite.FlipH = enemy.Position.X > session.Player.X;

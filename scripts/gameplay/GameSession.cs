@@ -6,13 +6,13 @@ public partial class GameSession : Node
 {
 	[Signal] public delegate void SoundCueRequestedEventHandler(string cue);
 
-	[Export] private ActionBindings _input;
 	[Export] private Inventory _inventory;
+	[Export] private EnemySystem _enemySystem;
 	[Export] private Resource _balanceResource;
 	private BalanceValues _balance;
+	private GameCommands _commands;
 	private readonly Random _random = new();
 	private float _verticalVelocity;
-	private float _spawnTimer;
 	private float _attackCooldown;
 	private float _swordHitCooldown;
 	private float _swordControlBlend;
@@ -45,7 +45,7 @@ public partial class GameSession : Node
 	private bool _replayReturning;
 
 	public readonly List<TreeState> Trees = new();
-	public readonly List<EnemyState> Enemies = new();
+	public IReadOnlyList<EnemySystem.EnemyState> Enemies => _enemySystem.Enemies;
 	public readonly List<ChestState> Chests = new();
 	public readonly List<FireState> Fires = new();
 	public Vector2 Player { get; private set; }
@@ -74,11 +74,13 @@ public partial class GameSession : Node
 	public bool IsReplaySwordActive => _replayActive || _replayReturning;
 	public IReadOnlyList<int> SwordCombo => _swordCombo;
 	public bool ComboOpen { get; private set; }
+	public bool WantsMouseCapture => IsSwordControlled && !ComboOpen && !InventoryOpen;
 	public float RecordedSwordDuration => HasRecordedSword ? _recordedSword[^1].Time : 0;
 	public float SwordRecordingDuration => IsSwordControlled ? MathF.Min(_recordingTime, _balance.SwordRecordMaxDuration) : 0;
 	public float SwordDamage => SwordFrame == SwordArchetype.Light ? _balance.LightSwordDamage : _balance.HeavySwordDamage;
 	public BalanceValues Balance => _balance;
 	public int PlayerFacing { get; private set; } = 1;
+	public bool PlayerMoving { get; private set; }
 	public int Wood => _inventory?.Count("wood") ?? 0;
 	public Inventory Bag => _inventory;
 	public IReadOnlyList<Inventory.Stack> LootItems => _lootItems;
@@ -92,6 +94,14 @@ public partial class GameSession : Node
 	public string Message { get; private set; } = "守住剑冢，右键切换御剑，Shift 突进闪避。";
 	public Vector2 MainFire => new(0, GroundY);
 
+	public override void _Ready()
+	{
+		if (_enemySystem == null) throw new InvalidOperationException("GameSession requires an EnemySystem child.");
+		_enemySystem.FireDamaged += damage => { Fuel = MathF.Max(0, Fuel - damage); Message = "啮阵兽正在侵蚀剑冢！"; };
+		_enemySystem.WoodStolen += () => Message = "盗铭伥偷走了一块剑骸。";
+		_enemySystem.PlayerHit += DamagePlayer;
+	}
+
 	public void Initialize(float groundY)
 	{
 		if (_balanceResource == null) throw new InvalidOperationException("GameSession requires a BalanceConfig resource.");
@@ -101,9 +111,10 @@ public partial class GameSession : Node
 		Fuel = _balance.StartingFuel;
 		Ember = _balance.StartingEmber;
 		FireLevel = _balance.StartingFireLevel;
-		_spawnTimer = _balance.EnemyInitialSpawnDelay;
+		_enemySystem.Initialize(_balance, _random);
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
 		Player = MainFire;
+		PlayerMoving = false;
 		SwordPosition = SwordFollowPosition();
 		ReplaySwordPosition = ReplaySwordFollowPosition();
 		_recordingSamples.Clear();
@@ -124,15 +135,14 @@ public partial class GameSession : Node
 		SpawnChestNearPlayer();
 	}
 
-	public void Tick(float dt)
+	public void Tick(float dt, GameCommands commands)
 	{
-		if (_input.Pressed("inventory")) ToggleInventory();
+		_commands = commands;
+		PlayerMoving = false;
+		if (_commands.Pressed("inventory")) ToggleInventory();
 		if (InventoryOpen)
 		{
-			_input.Pressed("search");
-			_input.Pressed("replay_sword");
-			_input.Pressed("combo_menu");
-			if (_input.Pressed("switch_sword"))
+			if (_commands.Pressed("switch_sword"))
 			{
 				if (_inventory.Count("light_sword") + _inventory.Count("heavy_sword") == 2)
 				{
@@ -141,7 +151,7 @@ public partial class GameSession : Node
 				}
 				else Message = "尚未获得另一种剑胚。";
 			}
-			if (_input.Pressed("feed"))
+			if (_commands.Pressed("feed"))
 			{
 				if (_inventory.Remove("healing_potion", 1))
 				{
@@ -154,14 +164,15 @@ public partial class GameSession : Node
 			}
 			return;
 		}
-		if (_input.Pressed("combo_menu")) SetComboOpen(!ComboOpen);
-		if (ComboOpen) { _input.ClearPressed(); return; }
+		if (_commands.Pressed("combo_menu")) SetComboOpen(!ComboOpen);
+		if (ComboOpen) return;
 		var previousPlayer = Player;
 		UpdatePlayer(dt);
 		var moved = Player.DistanceTo(previousPlayer) > .1f;
+		PlayerMoving = MathF.Abs(Player.X - previousPlayer.X) > .1f || IsDashing;
 		UpdateSword(dt);
 		UpdateFire(dt);
-		UpdateEnemies(dt);
+		_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory);
 		UpdateTemporaryFires(dt);
 		HandleInteractions(dt, moved);
 		HandleCombat();
@@ -177,7 +188,6 @@ public partial class GameSession : Node
 	public void SetComboOpen(bool open)
 	{
 		ComboOpen = open;
-		Input.MouseMode = open || !IsSwordControlled ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
 	}
 
 	public void ToggleInventory()
@@ -189,7 +199,6 @@ public partial class GameSession : Node
 			InventoryOpen = false;
 		}
 		else InventoryOpen = !InventoryOpen;
-		Input.MouseMode = InventoryOpen || !IsSwordControlled ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
 	}
 
 	public bool TransferLoot(int from, int to, int amount = int.MaxValue) => _inventory.TransferFrom(_lootItems, from, to, amount) > 0;
@@ -220,7 +229,7 @@ public partial class GameSession : Node
 		_swordControlTarget += offset;
 		CameraFocus += offset;
 		foreach (var tree in Trees) tree.Position += offset;
-		foreach (var enemy in Enemies) enemy.Position += offset;
+		_enemySystem.MoveToGround(offset);
 		foreach (var fire in Fires) fire.Position += offset;
 	}
 

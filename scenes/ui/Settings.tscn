@@ -1,13 +1,13 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bgcbncyj8qs0g"]
 
-[ext_resource type="Script" path="res://scripts/ui/SettingsView.cs" id="1_settings"]
-[ext_resource type="Texture2D" path="res://assets/art/runtime/ui/frames/ui_settings_page_frame.png" id="2_frame"]
-[ext_resource type="Texture2D" path="res://assets/art/runtime/ui/icons/ui_icon_settings.png" id="3_settings"]
-[ext_resource type="Texture2D" path="res://assets/art/runtime/ui/icons/ui_icon_close.png" id="4_close"]
-[ext_resource type="Texture2D" path="res://assets/art/runtime/ui/icons/ui_icon_display.png" id="5_display"]
-[ext_resource type="Texture2D" path="res://assets/art/runtime/ui/icons/ui_icon_fullscreen.png" id="6_resolution"]
+[ext_resource type="Script" uid="uid://xmh5b0m4i24j" path="res://scripts/ui/SettingsView.cs" id="1_settings"]
+[ext_resource type="Texture2D" uid="uid://ddg7irqqj12rr" path="res://assets/art/runtime/ui/frames/ui_settings_page_frame.png" id="2_frame"]
+[ext_resource type="Texture2D" uid="uid://c550un6sfp6tp" path="res://assets/art/runtime/ui/icons/ui_icon_settings.png" id="3_settings"]
+[ext_resource type="Texture2D" uid="uid://cm4eeq5lpovtd" path="res://assets/art/runtime/ui/icons/ui_icon_close.png" id="4_close"]
+[ext_resource type="Texture2D" uid="uid://dxa8c22y3dw88" path="res://assets/art/runtime/ui/icons/ui_icon_display.png" id="5_display"]
+[ext_resource type="Texture2D" uid="uid://o86lwala4lfq" path="res://assets/art/runtime/ui/icons/ui_icon_fullscreen.png" id="6_resolution"]
 
-[node name="Settings" type="Control"]
+[node name="Settings" type="Control" unique_id=1230353487]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,14 +17,15 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_settings")
 
-[node name="Backdrop" type="ColorRect" parent="."]
-anchors_preset = 15
+[node name="Backdrop" type="ColorRect" parent="." unique_id=768764412]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(0.0196, 0.0275, 0.0431, 0.62)
 
-[node name="Panel" type="TextureRect" parent="."]
+[node name="Panel" type="TextureRect" parent="." unique_id=2044272290]
+layout_mode = 0
 offset_left = 285.0
 offset_top = 90.0
 offset_right = 1635.0
@@ -33,14 +34,16 @@ mouse_filter = 2
 texture = ExtResource("2_frame")
 expand_mode = 1
 
-[node name="Content" type="Control" parent="Panel"]
+[node name="Content" type="Control" parent="Panel" unique_id=1317036228]
+anchors_preset = 0
 offset_left = 270.0
 offset_top = 162.0
 offset_right = 1080.0
 offset_bottom = 810.0
 mouse_filter = 2
 
-[node name="SettingsIcon" type="TextureRect" parent="Panel/Content"]
+[node name="SettingsIcon" type="TextureRect" parent="Panel/Content" unique_id=1742876969]
+layout_mode = 0
 offset_top = 3.0
 offset_right = 40.0
 offset_bottom = 43.0
@@ -48,18 +51,19 @@ mouse_filter = 2
 texture = ExtResource("3_settings")
 expand_mode = 1
 
-[node name="Title" type="Label" parent="Panel/Content"]
+[node name="Title" type="Label" parent="Panel/Content" unique_id=1915539321]
+layout_mode = 0
 offset_left = 50.0
 offset_right = 310.0
 offset_bottom = 46.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.878, 0.627, 1)
 theme_override_colors/font_outline_color = Color(0.106, 0.063, 0.043, 0.9)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 32
 text = "设置"
 
-[node name="Close" type="TextureRect" parent="Panel/Content"]
+[node name="Close" type="TextureRect" parent="Panel/Content" unique_id=1632778064]
+layout_mode = 0
 offset_left = 770.0
 offset_top = 4.0
 offset_right = 810.0
@@ -68,26 +72,26 @@ mouse_filter = 2
 texture = ExtResource("4_close")
 expand_mode = 1
 
-[node name="GeneralTab" type="ColorRect" parent="Panel/Content"]
-offset_left = 0.0
+[node name="GeneralTab" type="ColorRect" parent="Panel/Content" unique_id=704404664]
+layout_mode = 0
 offset_top = 54.0
 offset_right = 401.0
 offset_bottom = 90.0
 mouse_filter = 2
 color = Color(0.51, 0.369, 0.208, 0.92)
 
-[node name="Label" type="Label" parent="Panel/Content/GeneralTab"]
-anchors_preset = 15
+[node name="Label" type="Label" parent="Panel/Content/GeneralTab" unique_id=2061451430]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.878, 0.627, 1)
 theme_override_font_sizes/font_size = 16
 text = "音频与显示"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BindingsTab" type="ColorRect" parent="Panel/Content"]
+[node name="BindingsTab" type="ColorRect" parent="Panel/Content" unique_id=536037034]
+layout_mode = 0
 offset_left = 409.0
 offset_top = 54.0
 offset_right = 810.0
@@ -95,49 +99,51 @@ offset_bottom = 90.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.76)
 
-[node name="Label" type="Label" parent="Panel/Content/BindingsTab"]
-anchors_preset = 15
+[node name="Label" type="Label" parent="Panel/Content/BindingsTab" unique_id=1853626784]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.722, 0.761, 0.8, 1)
 theme_override_font_sizes/font_size = 16
 text = "按键绑定"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Help" type="Label" parent="Panel/Content"]
+[node name="Help" type="Label" parent="Panel/Content" unique_id=815873991]
+layout_mode = 0
 offset_top = 91.0
 offset_right = 810.0
 offset_bottom = 116.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.824, 0.847, 0.875, 1)
 theme_override_font_sizes/font_size = 17
 text = "点击分辨率切换，拖动滑块调整全局音量"
 
-[node name="Footer" type="Label" parent="Panel/Content"]
+[node name="Footer" type="Label" parent="Panel/Content" unique_id=481659193]
+layout_mode = 0
 offset_top = 619.0
 offset_right = 810.0
 offset_bottom = 644.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.722, 0.761, 0.8, 1)
 theme_override_font_sizes/font_size = 16
 text = "Tab 切换分页  ·  F1 / Esc 关闭  ·  修改自动保存"
 horizontal_alignment = 1
 
-[node name="GeneralPage" type="Control" parent="Panel/Content"]
+[node name="GeneralPage" type="Control" parent="Panel/Content" unique_id=205696845]
+anchors_preset = 0
 offset_right = 810.0
 offset_bottom = 648.0
 mouse_filter = 2
 
-[node name="ResolutionRow" type="ColorRect" parent="Panel/Content/GeneralPage"]
+[node name="ResolutionRow" type="ColorRect" parent="Panel/Content/GeneralPage" unique_id=139606810]
+layout_mode = 0
 offset_top = 112.0
 offset_right = 810.0
 offset_bottom = 160.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.78)
 
-[node name="Icon" type="TextureRect" parent="Panel/Content/GeneralPage/ResolutionRow"]
+[node name="Icon" type="TextureRect" parent="Panel/Content/GeneralPage/ResolutionRow" unique_id=749479754]
+layout_mode = 0
 offset_left = 6.0
 offset_top = 3.0
 offset_right = 48.0
@@ -146,27 +152,28 @@ mouse_filter = 2
 texture = ExtResource("5_display")
 expand_mode = 1
 
-[node name="Name" type="Label" parent="Panel/Content/GeneralPage/ResolutionRow"]
+[node name="Name" type="Label" parent="Panel/Content/GeneralPage/ResolutionRow" unique_id=211146826]
+layout_mode = 0
 offset_left = 56.0
 offset_top = 10.0
 offset_right = 300.0
 offset_bottom = 39.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18
 text = "分辨率"
 
-[node name="Value" type="Label" parent="Panel/Content/GeneralPage/ResolutionRow"]
+[node name="Value" type="Label" parent="Panel/Content/GeneralPage/ResolutionRow" unique_id=1759732920]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.9
 offset_top = 10.0
 offset_bottom = 39.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 18
 text = "1920 × 1080"
 
-[node name="SwitchIcon" type="TextureRect" parent="Panel/Content/GeneralPage/ResolutionRow"]
+[node name="SwitchIcon" type="TextureRect" parent="Panel/Content/GeneralPage/ResolutionRow" unique_id=780277284]
+layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -46.0
@@ -177,24 +184,26 @@ mouse_filter = 2
 texture = ExtResource("6_resolution")
 expand_mode = 1
 
-[node name="VolumeRow" type="ColorRect" parent="Panel/Content/GeneralPage"]
+[node name="VolumeRow" type="ColorRect" parent="Panel/Content/GeneralPage" unique_id=910363672]
+layout_mode = 0
 offset_top = 170.0
 offset_right = 810.0
 offset_bottom = 218.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.78)
 
-[node name="Name" type="Label" parent="Panel/Content/GeneralPage/VolumeRow"]
+[node name="Name" type="Label" parent="Panel/Content/GeneralPage/VolumeRow" unique_id=592608856]
+layout_mode = 0
+anchor_right = 0.34
 offset_left = 12.0
 offset_top = 10.0
-anchor_right = 0.34
 offset_bottom = 39.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18
 text = "主音量"
 
-[node name="Track" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow"]
+[node name="Track" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow" unique_id=994094395]
+layout_mode = 0
 offset_left = 324.0
 offset_top = 21.0
 offset_right = 664.2
@@ -202,13 +211,15 @@ offset_bottom = 27.0
 mouse_filter = 2
 color = Color(0.224, 0.286, 0.349, 1)
 
-[node name="Fill" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow/Track"]
+[node name="Fill" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow/Track" unique_id=2072565377]
+layout_mode = 0
 offset_right = 272.16
 offset_bottom = 6.0
 mouse_filter = 2
 color = Color(0.851, 0.655, 0.361, 1)
 
-[node name="Knob" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow/Track"]
+[node name="Knob" type="ColorRect" parent="Panel/Content/GeneralPage/VolumeRow/Track" unique_id=582474271]
+layout_mode = 0
 offset_left = 264.16
 offset_top = -5.0
 offset_right = 280.16
@@ -216,469 +227,488 @@ offset_bottom = 11.0
 mouse_filter = 2
 color = Color(1, 0.878, 0.627, 1)
 
-[node name="Value" type="Label" parent="Panel/Content/GeneralPage/VolumeRow"]
+[node name="Value" type="Label" parent="Panel/Content/GeneralPage/VolumeRow" unique_id=2091775220]
+layout_mode = 0
 anchor_left = 0.85
 anchor_right = 0.96
 offset_top = 10.0
 offset_bottom = 39.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 18
 text = "80%"
 horizontal_alignment = 2
 
-[node name="BindingPage" type="Control" parent="Panel/Content"]
+[node name="BindingPage" type="Control" parent="Panel/Content" unique_id=1604865940]
 visible = false
+anchors_preset = 0
 offset_right = 810.0
 offset_bottom = 648.0
 mouse_filter = 2
 
-[node name="Row00" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row00" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=697490808]
+layout_mode = 0
 offset_top = 112.0
 offset_right = 810.0
 offset_bottom = 137.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row00"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row00" unique_id=1707570284]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "向左移动"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row00"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row00" unique_id=1758325940]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "A"
 
-[node name="Row01" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row01" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=625741528]
+layout_mode = 0
 offset_top = 139.0
 offset_right = 810.0
 offset_bottom = 164.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row01"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row01" unique_id=316234324]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "向右移动"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row01"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row01" unique_id=1104860590]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "D"
 
-[node name="Row02" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row02" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=2127873066]
+layout_mode = 0
 offset_top = 166.0
 offset_right = 810.0
 offset_bottom = 191.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row02"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row02" unique_id=1547295592]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "跳跃"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row02"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row02" unique_id=961358140]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "W"
 
-[node name="Row03" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row03" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=269409009]
+layout_mode = 0
 offset_top = 193.0
 offset_right = 810.0
 offset_bottom = 218.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row03"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row03" unique_id=1740461372]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "突进（闪避）"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row03"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row03" unique_id=859509731]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Shift"
 
-[node name="Row04" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row04" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=1221034677]
+layout_mode = 0
 offset_top = 220.0
 offset_right = 810.0
 offset_bottom = 245.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row04"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row04" unique_id=1160065572]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "切换御剑/归剑"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row04"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row04" unique_id=419228424]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Right"
 
-[node name="Row05" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row05" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=606691309]
+layout_mode = 0
 offset_top = 247.0
 offset_right = 810.0
 offset_bottom = 272.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row05"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row05" unique_id=417240156]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "切换剑胚"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row05"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row05" unique_id=623298830]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Tab"
 
-[node name="Row06" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row06" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=826916849]
+layout_mode = 0
 offset_top = 274.0
 offset_right = 810.0
 offset_bottom = 299.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row06"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row06" unique_id=885195305]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "执行剑式连招"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row06"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row06" unique_id=1357505681]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "R"
 
-[node name="Row07" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row07" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=1172552144]
+layout_mode = 0
 offset_top = 301.0
 offset_right = 810.0
 offset_bottom = 326.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row07"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row07" unique_id=1124473970]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "打开招式搭配"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row07"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row07" unique_id=2144752300]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "J"
 
-[node name="Row08" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row08" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=1760477315]
+layout_mode = 0
 offset_top = 328.0
 offset_right = 810.0
 offset_bottom = 353.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row08"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row08" unique_id=2137795929]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "飞剑攻击"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row08"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row08" unique_id=307943218]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Left"
 
-[node name="Row09" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row09" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=884235993]
+layout_mode = 0
 offset_top = 355.0
 offset_right = 810.0
 offset_bottom = 380.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row09"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row09" unique_id=1028259579]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "搜刮宝箱/尸体"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row09"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row09" unique_id=1224020721]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "F"
 
-[node name="Row10" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row10" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=1278678216]
+layout_mode = 0
 offset_top = 382.0
 offset_right = 810.0
 offset_bottom = 407.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row10"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row10" unique_id=1353534283]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "补充剑冢灵蕴"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row10"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row10" unique_id=175286529]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "E"
 
-[node name="Row11" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row11" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=122658215]
+layout_mode = 0
 offset_top = 409.0
 offset_right = 810.0
 offset_bottom = 434.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row11"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row11" unique_id=1308510532]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "升级剑冢"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row11"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row11" unique_id=166549872]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "U"
 
-[node name="Row12" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row12" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=971569232]
+layout_mode = 0
 offset_top = 436.0
 offset_right = 810.0
 offset_bottom = 461.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row12"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row12" unique_id=108415015]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "放置剑标"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row12"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row12" unique_id=75910454]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Q"
 
-[node name="Row13" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row13" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=100395413]
+layout_mode = 0
 offset_top = 463.0
 offset_right = 810.0
 offset_bottom = 488.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row13"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row13" unique_id=530602841]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "布置临时剑阵"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row13"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row13" unique_id=627524246]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "C"
 
-[node name="Row14" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row14" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=167849790]
+layout_mode = 0
 offset_top = 490.0
 offset_right = 810.0
 offset_bottom = 515.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row14"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row14" unique_id=1949855497]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "强炼剑铭"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row14"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row14" unique_id=491129914]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "B"
 
-[node name="Row15" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row15" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=2037198350]
+layout_mode = 0
 offset_top = 517.0
 offset_right = 810.0
 offset_bottom = 542.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row15"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row15" unique_id=354177140]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "归葬剑铭"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row15"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row15" unique_id=468053028]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "G"
 
-[node name="Row16" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row16" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=1015874810]
+layout_mode = 0
 offset_top = 544.0
 offset_right = 810.0
 offset_bottom = 569.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row16"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row16" unique_id=175831081]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "重启远征"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row16"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row16" unique_id=1785054044]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "Enter"
 
-[node name="Row17" type="ColorRect" parent="Panel/Content/BindingPage"]
+[node name="Row17" type="ColorRect" parent="Panel/Content/BindingPage" unique_id=33670090]
+layout_mode = 0
 offset_top = 571.0
 offset_right = 810.0
 offset_bottom = 596.0
 mouse_filter = 2
 color = Color(0.063, 0.094, 0.141, 0.72)
 
-[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row17"]
-offset_left = 12.0
+[node name="Name" type="Label" parent="Panel/Content/BindingPage/Row17" unique_id=1876949258]
+layout_mode = 0
 anchor_right = 0.54
+offset_left = 12.0
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 15
 text = "打开背包"
 
-[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row17"]
+[node name="Value" type="Label" parent="Panel/Content/BindingPage/Row17" unique_id=2132489243]
+layout_mode = 0
 anchor_left = 0.58
 anchor_right = 0.98
 offset_bottom = 21.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.824, 0.522, 1)
 theme_override_font_sizes/font_size = 15
 text = "I"

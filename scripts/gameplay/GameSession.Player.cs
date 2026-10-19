@@ -7,10 +7,10 @@ public partial class GameSession : Node
 	{
 		IsDashing = false;
 		_dashCooldown = MathF.Max(0, _dashCooldown - dt);
-		var dashPressed = _input.Pressed("dash");
+		var dashPressed = _commands.Pressed("dash");
 		if (!IsSwordControlled)
 		{
-			var direction = (_input.Held("right") ? 1 : 0) - (_input.Held("left") ? 1 : 0);
+			var direction = (_commands.Held("right") ? 1 : 0) - (_commands.Held("left") ? 1 : 0);
 			if (direction != 0) PlayerFacing = direction;
 			if (dashPressed && _dashCooldown <= 0)
 			{
@@ -28,7 +28,7 @@ public partial class GameSession : Node
 			else Player += new Vector2(direction * _balance.PlayerMoveSpeed * dt, 0);
 		}
 		_verticalVelocity += _balance.Gravity * dt;
-		if (!IsSwordControlled && _input.Held("jump") && Player.Y >= GroundY) _verticalVelocity = -_balance.JumpImpulse;
+		if (!IsSwordControlled && _commands.Held("jump") && Player.Y >= GroundY) _verticalVelocity = -_balance.JumpImpulse;
 		Player = new Vector2(Player.X, MathF.Min(GroundY, Player.Y + _verticalVelocity * dt));
 		if (Player.Y >= GroundY) _verticalVelocity = 0;
 		var spiritPosition = IsSwordControlled ? SwordPosition : Player;
@@ -42,8 +42,8 @@ public partial class GameSession : Node
 	private void UpdateSword(float dt)
 	{
 		_swordHitCooldown = MathF.Max(0, _swordHitCooldown - dt);
-		if (_input.Pressed("replay_sword")) StartSwordReplay();
-		if (_input.Pressed("sword_control"))
+		if (_commands.Pressed("replay_sword")) StartSwordReplay();
+		if (_commands.Pressed("sword_control"))
 		{
 			if (SwordState == SwordMode.Controlled)
 				BeginSwordReturn("本命剑循神识线归鞘。");
@@ -56,7 +56,6 @@ public partial class GameSession : Node
 				_recordingTime = 0;
 				_recordingSamples.Clear();
 				_recordingSamples.Add(new SwordSample(0, Vector2.Zero));
-				Input.MouseMode = Input.MouseModeEnum.Captured;
 				EmitSignal(SignalName.SoundCueRequested, "control_enter");
 				Message = "神识入剑：视角随剑，移鼠御剑，再按右键归剑。";
 			}
@@ -89,11 +88,11 @@ public partial class GameSession : Node
 		{
 			SwordVelocity = (_swordAttackTarget - SwordPosition).Normalized() * _balance.SwordAttackSpeed;
 			SwordPosition = SwordPosition.MoveToward(_swordAttackTarget, _balance.SwordAttackSpeed * dt);
-			var attackHit = !_swordAttackHit ? Enemies.Find(enemy => !enemy.IsDying && enemy.Position.DistanceTo(SwordPosition) < _balance.EnemyAttackHitRadius) : null;
+			var attackHit = !_swordAttackHit ? _enemySystem.FindLivingNear(SwordPosition, _balance.EnemyAttackHitRadius) : null;
 			if (attackHit != null)
 			{
 				_swordAttackHit = true;
-					var killed = attackHit.TakeDamage(SwordDamage, _balance.EnemyDamageFeedbackDuration, _balance.EnemyHurtDuration, _balance.EnemyUnclaimedCorpseLifetime);
+				var killed = _enemySystem.Damage(attackHit, SwordDamage);
 				EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
 				Message = killed ? "飞剑斩灭了一缕剑煞。" : $"飞剑造成 {SwordDamage:0} 点伤害。";
 			}
@@ -112,11 +111,11 @@ public partial class GameSession : Node
 
 		var distance = SwordDistance;
 		if (!IsInSpiritRecoveryRange(SwordPosition)) Ember = MathF.Max(0, Ember - (_balance.EmberControlBaseDrain + distance / _balance.EmberControlDistanceDrain) * dt);
-		var hit = _swordHitCooldown <= 0 ? Enemies.Find(enemy => !enemy.IsDying && enemy.Position.DistanceTo(SwordPosition) < _balance.SwordHitRadius) : null;
+		var hit = _swordHitCooldown <= 0 ? _enemySystem.FindLivingNear(SwordPosition, _balance.SwordHitRadius) : null;
 		if (hit != null)
 		{
 			_swordHitCooldown = _balance.SwordHitCooldown;
-			var killed = hit.TakeDamage(SwordDamage, _balance.EnemyDamageFeedbackDuration, _balance.EnemyHurtDuration, _balance.EnemyUnclaimedCorpseLifetime);
+			var killed = _enemySystem.Damage(hit, SwordDamage);
 			EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
 			Message = killed ? "飞剑贯穿了一缕剑煞。" : $"本命剑造成 {SwordDamage:0} 点伤害。";
 		}
@@ -190,12 +189,11 @@ public partial class GameSession : Node
 			ReplaySwordVelocity = (ReplaySwordPosition - previous) / MathF.Max(dt, .001f);
 			if (_replayHitCooldown <= 0)
 			{
-				var hit = Enemies.Find(enemy => !enemy.IsDying &&
-					enemy.Position.DistanceTo(Geometry2D.GetClosestPointToSegment(enemy.Position, previous, ReplaySwordPosition)) < _balance.SwordHitRadius);
+				var hit = _enemySystem.FindLivingAlong(previous, ReplaySwordPosition, _balance.SwordHitRadius);
 				if (hit != null)
 				{
 					_replayHitCooldown = _balance.SwordHitCooldown;
-					var killed = hit.TakeDamage(_replayDamage, _balance.EnemyDamageFeedbackDuration, _balance.EnemyHurtDuration, _balance.EnemyUnclaimedCorpseLifetime);
+					var killed = _enemySystem.Damage(hit, _replayDamage);
 					EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
 					Message = killed ? "从剑斩灭了一缕剑煞。" : $"从剑造成 {_replayDamage:0} 点伤害。";
 				}
@@ -230,7 +228,6 @@ public partial class GameSession : Node
 		var recorded = IsSwordControlled && FinishSwordRecording();
 		SwordState = SwordMode.Returning;
 		_swordControlTarget = SwordPosition;
-		Input.MouseMode = Input.MouseModeEnum.Visible;
 		EmitSignal(SignalName.SoundCueRequested, "sword_return");
 		Message = recorded ? $"{message} 已录制剑式，按 J 可将其加入连招。" : message;
 	}
@@ -239,16 +236,13 @@ public partial class GameSession : Node
 	private void HandleCombat()
 	{
 		if (IsSwordControlled) return;
-		var axe = _input.Pressed("axe");
+		var axe = _commands.Pressed("axe");
 		if (_attackCooldown > 0) return;
-		var mouse = GetViewport().GetMousePosition();
-		var viewportCenter = GetViewport().GetVisibleRect().Size / 2;
-		var mouseWorld = new Vector2(CameraFocus.X + mouse.X - viewportCenter.X, mouse.Y);
 		if (axe && SwordState == SwordMode.Following)
 		{
 			_attackCooldown = _balance.AttackCooldown;
 			SwordState = SwordMode.Attacking;
-			_swordAttackTarget = mouseWorld;
+			_swordAttackTarget = _commands.AttackTarget;
 			_swordAttackHit = false;
 			EmitSignal(SignalName.SoundCueRequested, "sword_launch");
 			Message = "飞剑应念而出。";

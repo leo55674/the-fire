@@ -24,14 +24,12 @@ public partial class Main : Node2D
 	[Export] private TextureRect _startButtonView;
 	[Export] private TextureRect _settingsButtonView;
 	[Export] private TextureRect _exitButtonView;
+	[Export] private LayeredPanelCanvas _panelCanvas;
 	private bool _mainMenuOpen = true;
 	private bool _settingsOpen;
-	private bool _draggingVolume;
 	private int _selectedMenuItem;
-	private int _settingsTab;
 	private int _resolutionIndex = 2;
 	private float _masterVolume = .8f;
-	private string _editingAction;
 	private bool _inventorySplitMode;
 	private bool _inventoryDragFromLoot;
 	private int _inventoryDragSlot = -1;
@@ -41,8 +39,9 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
-		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null)
-			throw new InvalidOperationException("Main requires ActionBindings, GameSession, and WorldPresentation nodes.");
+		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null)
+			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, and LayeredPanelCanvas nodes.");
+		_panelCanvas.DrawPanels = DrawLayeredPanels;
 		_menuButtonNormal = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png");
 		_menuButtonSelected = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_selected.png");
 		_settingsIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_settings.png");
@@ -50,19 +49,28 @@ public partial class Main : Node2D
 		_statusBarsAtlas = GD.Load<Texture2D>("res://assets/art/runtime/ui/frames/ui_status_bars_atlas.png");
 		_uiFont = new SystemFont { FontNames = new[] { "Microsoft YaHei", "SimHei" } };
 		_settingsView.Input = _input;
+		_settingsView.CloseRequested += CloseSettings;
+		_settingsView.ResolutionCycleRequested += CycleResolution;
+		_settingsView.VolumeChanged += volume => { _masterVolume = volume; ApplyMasterVolume(); };
+		_settingsView.VolumeCommitted += SaveSettings;
 		LoadSettings();
 		_session.Initialize(GroundY);
 		SyncScreenState();
 		QueueRedraw();
+		_panelCanvas.QueueRedraw();
 	}
 
 	public override void _Process(double delta)
 	{
-		if (_mainMenuOpen || _settingsOpen) { SyncScreenState(); QueueRedraw(); return; }
+		if (_mainMenuOpen || _settingsOpen) { SyncScreenState(); QueueRedraw(); _panelCanvas.QueueRedraw(); return; }
 		var dt = (float)delta;
-		_session.Tick(dt);
+		var mouse = GetViewport().GetMousePosition();
+		var attackTarget = new Vector2(_session.CameraFocus.X + mouse.X - GetViewport().GetVisibleRect().Size.X / 2, mouse.Y);
+		_session.Tick(dt, _input.ConsumeGameplay(attackTarget));
+		SyncMouseMode();
 		_worldPresentation.Sync(_session, false);
 		QueueRedraw();
+		_panelCanvas.QueueRedraw();
 	}
 
 	public override void _Input(InputEvent @event)
@@ -71,7 +79,7 @@ public partial class Main : Node2D
 		{
 			if (@event is InputEventKey menuKey && menuKey.Pressed && !menuKey.Echo)
 			{
-				if (menuKey.Keycode == Key.F1) { _settingsOpen = true; SyncScreenState(); QueueRedraw(); return; }
+				if (menuKey.Keycode == Key.F1) { OpenSettings(); return; }
 				if (menuKey.Keycode == Key.Up || menuKey.Keycode == Key.W) { _selectedMenuItem = (_selectedMenuItem + 2) % 3; return; }
 				if (menuKey.Keycode == Key.Down || menuKey.Keycode == Key.S) { _selectedMenuItem = (_selectedMenuItem + 1) % 3; return; }
 				if (menuKey.Keycode == Key.Enter || menuKey.Keycode == Key.Space) { ActivateSelectedMenuItem(); return; }
@@ -87,31 +95,17 @@ public partial class Main : Node2D
 			return;
 		}
 		if (_session.ComboOpen) { HandleComboInput(@event); return; }
-		if (_settingsOpen && _draggingVolume && @event is InputEventMouseMotion volumeMotion) { SetMasterVolumeFromMouse(volumeMotion.Position.X); QueueRedraw(); return; }
-		if (@event is InputEventMouseMotion swordMotion) { if (_session.InventoryOpen) return; if (!_settingsOpen) _session.CaptureSwordMouseMotion(swordMotion.Relative); }
+		if (_settingsOpen) { _settingsView.HandleInput(@event); return; }
+		if (@event is InputEventMouseMotion swordMotion) { if (_session.InventoryOpen) return; _session.CaptureSwordMouseMotion(swordMotion.Relative); }
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
 		{
-			if (!_settingsOpen && !_mainMenuOpen && _session.InventoryOpen && keyEvent.Keycode == Key.Escape) { _session.ToggleInventory(); return; }
-			if (keyEvent.Keycode == Key.F1) { CloseVolumeDrag(); _editingAction = null; _settingsOpen = !_settingsOpen; SyncScreenState(); QueueRedraw(); return; }
-			if (_settingsOpen && keyEvent.Keycode == Key.Escape) { CloseVolumeDrag(); _editingAction = null; _settingsOpen = false; SyncScreenState(); QueueRedraw(); return; }
-			if (_settingsOpen && _editingAction != null) { _input.Rebind(_editingAction, keyEvent.Keycode); _editingAction = null; return; }
-			if (_settingsOpen && keyEvent.Keycode == Key.Tab) { CloseVolumeDrag(); _settingsTab = 1 - _settingsTab; QueueRedraw(); return; }
-			if (!_settingsOpen) _input.Capture(@event);
+			if (_session.InventoryOpen && keyEvent.Keycode == Key.Escape) { _session.ToggleInventory(); SyncMouseMode(); return; }
+			if (keyEvent.Keycode == Key.F1) { OpenSettings(); return; }
+			_input.Capture(@event);
 		}
 		if (@event is InputEventMouseButton mouseEvent)
 		{
-			if (!_settingsOpen && !_mainMenuOpen && _session.InventoryOpen) { HandleInventoryMouse(mouseEvent); return; }
-			if (_settingsOpen)
-			{
-				if (!mouseEvent.Pressed) { CloseVolumeDrag(); return; }
-				if (mouseEvent.ButtonIndex == MouseButton.Left && _settingsView.SettingsCloseButton().HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _editingAction = null; _settingsOpen = false; SyncScreenState(); QueueRedraw(); return; }
-				for (var i = 0; i < 2; i++)
-					if (mouseEvent.ButtonIndex == MouseButton.Left && _settingsView.SettingsTab(i).HasPoint(mouseEvent.Position)) { CloseVolumeDrag(); _settingsTab = i; _editingAction = null; QueueRedraw(); return; }
-				if (_editingAction != null) { _input.Rebind(_editingAction, mouseEvent.ButtonIndex); _editingAction = null; }
-				else SelectSettingRow(mouseEvent.Position, mouseEvent.ButtonIndex);
-				QueueRedraw();
-				return;
-			}
+			if (_session.InventoryOpen) { HandleInventoryMouse(mouseEvent); return; }
 			if (!mouseEvent.Pressed) return;
 			if (mouseEvent.ButtonIndex == MouseButton.Left && GameExitButton().HasPoint(mouseEvent.Position))
 			{
@@ -137,6 +131,7 @@ public partial class Main : Node2D
 	private void CycleResolution()
 	{
 		_resolutionIndex = (_resolutionIndex + 1) % Resolutions.Length;
+		_settingsView.Resolution = Resolutions[_resolutionIndex];
 		ApplyResolution();
 		MoveWorldToGround();
 		SaveSettings();
@@ -147,18 +142,6 @@ public partial class Main : Node2D
 	{
 		AudioServer.SetBusMute(0, _masterVolume <= 0);
 		AudioServer.SetBusVolumeDb(0, Mathf.LinearToDb(Mathf.Max(_masterVolume, .0001f)));
-	}
-	private void SetMasterVolumeFromMouse(float mouseX)
-	{
-		var track = _settingsView.VolumeTrack();
-		_masterVolume = Mathf.Clamp((mouseX - track.Position.X) / track.Size.X, 0, 1);
-		ApplyMasterVolume();
-	}
-	private void CloseVolumeDrag()
-	{
-		if (!_draggingVolume) return;
-		_draggingVolume = false;
-		SaveSettings();
 	}
 	private void SaveSettings()
 	{
@@ -175,23 +158,6 @@ public partial class Main : Node2D
 		_worldPresentation.Sync(_session, _mainMenuOpen);
 	}
 
-	private void SelectSettingRow(Vector2 mouse, MouseButton button)
-	{
-		if (_settingsTab == 0)
-		{
-			if (button == MouseButton.Left && _settingsView.ResolutionRow().HasPoint(mouse)) CycleResolution();
-			else
-			{
-				var track = _settingsView.VolumeTrack();
-				var hitArea = new Rect2(track.Position.X, _settingsView.VolumeRow().Position.Y, track.Size.X, _settingsView.VolumeRow().Size.Y);
-				if (button == MouseButton.Left && hitArea.HasPoint(mouse)) { _draggingVolume = true; SetMasterVolumeFromMouse(mouse.X); }
-			}
-			return;
-		}
-		for (var i = 0; i < ActionBindings.Definitions.Length; i++)
-			if (_settingsView.SettingRow(i).HasPoint(mouse)) { _editingAction = ActionBindings.Definitions[i].Action; return; }
-	}
-
 	private Rect2 MenuButton(int index)
 	{
 		var size = GetViewportRect().Size;
@@ -205,7 +171,7 @@ public partial class Main : Node2D
 	private void ActivateSelectedMenuItem()
 	{
 		if (_selectedMenuItem == 0) StartGame();
-		else if (_selectedMenuItem == 1) { _settingsOpen = true; SyncScreenState(); QueueRedraw(); }
+		else if (_selectedMenuItem == 1) OpenSettings();
 		else GetTree().Quit();
 	}
 
@@ -216,6 +182,9 @@ public partial class Main : Node2D
 		SyncScreenState();
 		_worldPresentation.Sync(_session, false);
 	}
+
+	private void OpenSettings() { _settingsOpen = true; SyncScreenState(); }
+	private void CloseSettings() { _settingsOpen = false; SyncScreenState(); }
 
 	private void UpdateMenuView()
 	{
@@ -232,18 +201,27 @@ public partial class Main : Node2D
 
 	private void SyncScreenState()
 	{
+		SyncMouseMode();
 		_titleBackdropView.Visible = _mainMenuOpen;
 		_gameBackdropView.Visible = !_mainMenuOpen;
 		_worldPresentation.Visible = !_mainMenuOpen;
 		_mainMenuView.Visible = _mainMenuOpen && !_settingsOpen;
 		_settingsView.Visible = _settingsOpen;
-		_settingsView.Tab = _settingsTab;
-		_settingsView.EditingAction = _editingAction;
 		_settingsView.Resolution = Resolutions[_resolutionIndex];
 		_settingsView.MasterVolume = _masterVolume;
 		_settingsView.Refresh();
 		if (!_mainMenuOpen) _worldPresentation.Sync(_session, false);
 		QueueRedraw();
+	}
+
+	private void SyncMouseMode() => Input.MouseMode = !_mainMenuOpen && !_settingsOpen && _session.WantsMouseCapture
+		? Input.MouseModeEnum.Captured : Input.MouseModeEnum.Visible;
+
+	private void DrawLayeredPanels(CanvasItem canvas)
+	{
+		var size = GetViewportRect().Size;
+		if (_session.InventoryOpen) DrawInventory(canvas, size);
+		if (_session.ComboOpen) DrawCombo(canvas, size);
 	}
 
 	public override void _Draw()

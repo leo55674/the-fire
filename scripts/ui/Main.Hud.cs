@@ -32,8 +32,6 @@ public partial class Main : Node2D
 		DrawMiniMap(size);
 		if (_finalNight > 0) DrawString(font, new Vector2(size.X - 218, 142), $"\u70fd\u706b\u957f\u591c\uff1a{MathF.Ceiling(_finalNight)}", HorizontalAlignment.Left, -1, 17, new Color("ffb4a2"));
 		if (!string.IsNullOrEmpty(_session.SearchPrompt)) DrawSearchPrompt(size);
-		if (_session.InventoryOpen) DrawInventory(size);
-		if (_session.ComboOpen) DrawCombo(size);
 	}
 
 	private void DrawStatusBar(Rect2 rect, Rect2 frameRegion, Rect2 fillRegion, float value, float maximum)
@@ -56,28 +54,28 @@ public partial class Main : Node2D
 		DrawString(_uiFont, center + new Vector2(30, 6), _session.IsSearching ? "搜刮中。。。。" : _session.SearchPrompt, HorizontalAlignment.Left, 500, 17, color);
 	}
 
-	private void DrawInventory(Vector2 size)
+	private void DrawInventory(CanvasItem canvas, Vector2 size)
 	{
 		var font = _uiFont ?? ThemeDB.FallbackFont;
-		DrawRect(new Rect2(Vector2.Zero, size), new Color("03060b", .68f));
+		canvas.DrawRect(new Rect2(Vector2.Zero, size), new Color("03060b", .68f));
 		var bagPanel = InventoryPanel(size, false);
-		DrawInventoryPanel(bagPanel, _session.Bag.Slots, false, font);
+		DrawInventoryPanel(canvas, bagPanel, _session.Bag.Slots, false, font);
 		if (_session.LootOpen)
 		{
 			var lootPanel = InventoryPanel(size, true);
 			var lootSlots = Enumerable.Repeat<Inventory.Stack>(null, _session.Bag.Capacity).ToArray();
 			for (var i = 0; i < Math.Min(lootSlots.Length, _session.LootItems.Count); i++) lootSlots[i] = _session.LootItems[i];
-			DrawInventoryPanel(lootPanel, lootSlots, true, font);
+			DrawInventoryPanel(canvas, lootPanel, lootSlots, true, font);
 		}
-		else DrawString(font, bagPanel.Position + new Vector2(26, bagPanel.Size.Y - 18), "E 使用疗伤丹    Tab 切换剑胚    I / Esc 关闭", HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
+		else canvas.DrawString(font, bagPanel.Position + new Vector2(26, bagPanel.Size.Y - 18), "E 使用疗伤丹    Tab 切换剑胚    I / Esc 关闭", HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
 		if (_inventoryDragStack != null)
 		{
 			var ghost = new Rect2(GetViewport().GetMousePosition() - new Vector2(36, 36), new Vector2(72, 72));
-			DrawRect(ghost, new Color("b8d1e3", .42f));
-			DrawInventoryIcon(_inventoryDragStack.Id, ghost);
-			DrawRect(ghost, new Color("07101a", .46f));
-			DrawRect(ghost, new Color("dcecff", .72f), false, 2);
-			DrawString(font, ghost.End - new Vector2(18, 4), _inventoryDragStack.Count.ToString(), HorizontalAlignment.Right, 16, 13, Colors.White);
+			canvas.DrawRect(ghost, new Color("b8d1e3", .42f));
+			DrawInventoryIcon(canvas, _inventoryDragStack.Id, ghost);
+			canvas.DrawRect(ghost, new Color("07101a", .46f));
+			canvas.DrawRect(ghost, new Color("dcecff", .72f), false, 2);
+			canvas.DrawString(font, ghost.End - new Vector2(18, 4), _inventoryDragStack.Count.ToString(), HorizontalAlignment.Right, 16, 13, Colors.White);
 		}
 	}
 
@@ -110,12 +108,12 @@ public partial class Main : Node2D
 		return new Rect2(panel.Position + new Vector2(20 + index * (width + 8), panel.Size.Y - 55), new Vector2(width, 34));
 	}
 
-	private void DrawInventoryPanel(Rect2 panel, IReadOnlyList<Inventory.Stack> slots, bool loot, Font font)
+	private void DrawInventoryPanel(CanvasItem canvas, Rect2 panel, IReadOnlyList<Inventory.Stack> slots, bool loot, Font font)
 	{
-		DrawRect(panel, new Color("0c121c", .97f));
-		DrawRect(panel, new Color("c69b5c"), false, 2);
-		DrawString(font, panel.Position + new Vector2(20, 36), loot ? "搜刮物资" : "行囊", HorizontalAlignment.Left, -1, 24, new Color("ffe0a0"));
-		if (!loot) DrawString(font, panel.Position + new Vector2(panel.Size.X - 170, 34), $"物品 {_session.Bag.Items.Count}/{_session.Bag.Capacity}", HorizontalAlignment.Right, 150, 14, new Color("b8c2cc"));
+		canvas.DrawRect(panel, new Color("0c121c", .97f));
+		canvas.DrawRect(panel, new Color("c69b5c"), false, 2);
+		canvas.DrawString(font, panel.Position + new Vector2(20, 36), loot ? "搜刮物资" : "行囊", HorizontalAlignment.Left, -1, 24, new Color("ffe0a0"));
+		if (!loot) canvas.DrawString(font, panel.Position + new Vector2(panel.Size.X - 170, 34), $"物品 {_session.Bag.Items.Count}/{_session.Bag.Capacity}", HorizontalAlignment.Right, 150, 14, new Color("b8c2cc"));
 		var mouse = GetViewport().GetMousePosition();
 		var hovered = -1;
 		for (var i = 0; i < _session.Bag.Capacity; i++)
@@ -124,29 +122,29 @@ public partial class Main : Node2D
 			var stack = i < slots.Count ? slots[i] : null;
 			var over = rect.HasPoint(mouse);
 			if (over && stack != null) hovered = i;
-			DrawRect(rect, over ? new Color("5d4930") : stack != null ? new Color("202a34") : new Color("111923"));
-			DrawRect(rect, over ? new Color("ffe0a0") : new Color("46535e"), false, over ? 2 : 1);
+			canvas.DrawRect(rect, over ? new Color("5d4930") : stack != null ? new Color("202a34") : new Color("111923"));
+			canvas.DrawRect(rect, over ? new Color("ffe0a0") : new Color("46535e"), false, over ? 2 : 1);
 			if (stack == null) continue;
-			DrawInventoryIcon(stack.Id, rect);
-			DrawString(font, rect.End - new Vector2(20, 4), stack.Count.ToString(), HorizontalAlignment.Right, 17, 13, Colors.White);
+			DrawInventoryIcon(canvas, stack.Id, rect);
+			canvas.DrawString(font, rect.End - new Vector2(20, 4), stack.Count.ToString(), HorizontalAlignment.Right, 17, 13, Colors.White);
 		}
 		var descriptionRect = new Rect2(panel.Position + new Vector2(18, panel.Size.Y - 106), new Vector2(panel.Size.X - 36, 40));
-		DrawRect(descriptionRect, new Color("151e28"));
+		canvas.DrawRect(descriptionRect, new Color("151e28"));
 		if (hovered >= 0)
 		{
 			var stack = slots[hovered];
-			DrawString(font, descriptionRect.Position + new Vector2(8, 15), ItemName(stack.Id), HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
-			DrawString(font, descriptionRect.Position + new Vector2(8, 33), ItemDescription(stack.Id), HorizontalAlignment.Left, descriptionRect.Size.X - 16, 12, new Color("d0d8df"));
+			canvas.DrawString(font, descriptionRect.Position + new Vector2(8, 15), ItemName(stack.Id), HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
+			canvas.DrawString(font, descriptionRect.Position + new Vector2(8, 33), ItemDescription(stack.Id), HorizontalAlignment.Left, descriptionRect.Size.X - 16, 12, new Color("d0d8df"));
 		}
-		else DrawString(font, descriptionRect.Position + new Vector2(8, 25), "拖动物品可自由摆放；悬停查看详情", HorizontalAlignment.Left, -1, 13, new Color("9daab5"));
+		else canvas.DrawString(font, descriptionRect.Position + new Vector2(8, 25), "拖动物品可自由摆放；悬停查看详情", HorizontalAlignment.Left, -1, 13, new Color("9daab5"));
 		var buttonCount = loot ? 3 : 2;
 		for (var i = 0; i < buttonCount; i++)
 		{
 			var rect = InventoryButton(panel, i, loot);
 			var label = loot && i == 2 ? "全部拿取" : i == 0 ? (_inventorySplitMode ? "拆分：已开启" : "拆分") : "整理";
-			DrawRect(rect, rect.HasPoint(mouse) ? new Color("725230") : new Color("26313c"));
-			DrawRect(rect, new Color("9b8059"), false, 1);
-			DrawString(font, rect.Position + new Vector2(0, 22), label, HorizontalAlignment.Center, rect.Size.X, 14, Colors.White);
+			canvas.DrawRect(rect, rect.HasPoint(mouse) ? new Color("725230") : new Color("26313c"));
+			canvas.DrawRect(rect, new Color("9b8059"), false, 1);
+			canvas.DrawString(font, rect.Position + new Vector2(0, 22), label, HorizontalAlignment.Center, rect.Size.X, 14, Colors.White);
 		}
 	}
 
@@ -217,28 +215,28 @@ public partial class Main : Node2D
 		}
 	}
 
-	private void DrawInventoryIcon(string itemId, Rect2 slot)
+	private void DrawInventoryIcon(CanvasItem canvas, string itemId, Rect2 slot)
 	{
 		var center = slot.GetCenter();
 		switch (itemId)
 		{
 			case "wood":
-				DrawCircle(center, 18, new Color("9a7650"));
-				DrawCircle(center + new Vector2(-5, -4), 8, new Color("c9a878"));
-				DrawLine(center + new Vector2(-4, 9), center + new Vector2(11, -10), new Color("e6d2a4"), 2, true);
+				canvas.DrawCircle(center, 18, new Color("9a7650"));
+				canvas.DrawCircle(center + new Vector2(-5, -4), 8, new Color("c9a878"));
+				canvas.DrawLine(center + new Vector2(-4, 9), center + new Vector2(11, -10), new Color("e6d2a4"), 2, true);
 				break;
 			case "light_sword":
 			case "heavy_sword":
 				var length = itemId == "light_sword" ? 27 : 23;
 				var angle = itemId == "light_sword" ? -Mathf.Pi / 4 : -Mathf.Pi / 3.5f;
 				var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-				DrawLine(center - direction * 9, center + direction * length, new Color("d9e4e8"), itemId == "light_sword" ? 3 : 6, true);
-				DrawLine(center - direction * 12 + direction.Orthogonal() * 6, center - direction * 12 - direction.Orthogonal() * 6, new Color("c99a58"), 3, true);
+				canvas.DrawLine(center - direction * 9, center + direction * length, new Color("d9e4e8"), itemId == "light_sword" ? 3 : 6, true);
+				canvas.DrawLine(center - direction * 12 + direction.Orthogonal() * 6, center - direction * 12 - direction.Orthogonal() * 6, new Color("c99a58"), 3, true);
 				break;
 			case "healing_potion":
-				DrawCircle(center, 16, new Color("a54c48"));
-				DrawCircle(center + new Vector2(-5, -6), 5, new Color("e99175"));
-				DrawLine(center + new Vector2(0, -14), center + new Vector2(8, -23), new Color("dbbd79"), 3, true);
+				canvas.DrawCircle(center, 16, new Color("a54c48"));
+				canvas.DrawCircle(center + new Vector2(-5, -6), 5, new Color("e99175"));
+				canvas.DrawLine(center + new Vector2(0, -14), center + new Vector2(8, -23), new Color("dbbd79"), 3, true);
 				break;
 		}
 	}

@@ -40,6 +40,15 @@ public partial class ActionBindings : Node
 	public bool Pressed(string action) => _pressedActions.Remove(action);
 	public void ClearPressed() => _pressedActions.Clear();
 	public string LabelFor(string action) => _bindings[action].Label;
+	public GameCommands ConsumeGameplay(Vector2 attackTarget)
+	{
+		var held = new HashSet<string>();
+		foreach (var (action, _) in Definitions)
+			if (Held(action)) held.Add(action);
+		var commands = new GameCommands(held, new HashSet<string>(_pressedActions), attackTarget, LabelFor("search"));
+		_pressedActions.Clear();
+		return commands;
+	}
 
 	public void Rebind(string action, Key key)
 	{
@@ -115,4 +124,23 @@ public partial class ActionBindings : Node
 		public Binding(MouseButton mouse) => Mouse = mouse;
 		public string Label => Key?.ToString() ?? Mouse?.ToString() ?? "未绑定";
 	}
+}
+
+public readonly struct GameCommands
+{
+	private readonly HashSet<string> _held;
+	private readonly HashSet<string> _pressed;
+	public Vector2 AttackTarget { get; }
+	public string SearchLabel { get; }
+
+	public GameCommands(HashSet<string> held, HashSet<string> pressed, Vector2 attackTarget, string searchLabel)
+	{
+		_held = held;
+		_pressed = pressed;
+		AttackTarget = attackTarget;
+		SearchLabel = searchLabel;
+	}
+
+	public bool Held(string action) => _held.Contains(action);
+	public bool Pressed(string action) => _pressed.Contains(action);
 }

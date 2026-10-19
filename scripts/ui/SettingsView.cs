@@ -2,11 +2,17 @@ using Godot;
 
 public partial class SettingsView : Control
 {
+	[Signal] public delegate void CloseRequestedEventHandler();
+	[Signal] public delegate void ResolutionCycleRequestedEventHandler();
+	[Signal] public delegate void VolumeChangedEventHandler(float volume);
+	[Signal] public delegate void VolumeCommittedEventHandler();
+
 	public ActionBindings Input { get; set; }
-	public int Tab { get; set; }
-	public string EditingAction { get; set; }
+	private int Tab { get; set; }
+	private string EditingAction { get; set; }
 	public Vector2I Resolution { get; set; } = new(1920, 1080);
 	public float MasterVolume { get; set; } = .8f;
+	private bool _draggingVolume;
 
 	private ColorRect _backdrop;
 	private TextureRect _panel;
@@ -70,7 +76,7 @@ public partial class SettingsView : Control
 		return new Rect2(panel.Position + panel.Size * new Vector2(.2f, .18f), panel.Size * new Vector2(.6f, .72f));
 	}
 
-	public Rect2 SettingsTab(int index)
+	private Rect2 SettingsTab(int index)
 	{
 		var content = SettingsContent();
 		var width = (content.Size.X - 8) / 2;
@@ -78,27 +84,89 @@ public partial class SettingsView : Control
 	}
 
 	private float SettingsRowHeight() => Mathf.Clamp(Mathf.Floor((SettingsContent().Size.Y - 154) / ActionBindings.Definitions.Length), 17, 28);
-	public Rect2 ResolutionRow()
+	private Rect2 ResolutionRow()
 	{
 		var content = SettingsContent();
 		return new Rect2(content.Position + new Vector2(0, 112), new Vector2(content.Size.X, 48));
 	}
-	public Rect2 VolumeRow() => new(ResolutionRow().Position + new Vector2(0, 58), ResolutionRow().Size);
-	public Rect2 VolumeTrack()
+	private Rect2 VolumeRow() => new(ResolutionRow().Position + new Vector2(0, 58), ResolutionRow().Size);
+	private Rect2 VolumeTrack()
 	{
 		var row = VolumeRow();
 		return new Rect2(row.Position + new Vector2(row.Size.X * .4f, row.Size.Y / 2 - 3), new Vector2(row.Size.X * .42f, 6));
 	}
-	public Rect2 SettingRow(int index)
+	private Rect2 SettingRow(int index)
 	{
 		var content = SettingsContent();
 		var height = SettingsRowHeight();
 		return new Rect2(content.Position + new Vector2(0, 112 + index * height), new Vector2(content.Size.X, height - 2));
 	}
-	public Rect2 SettingsCloseButton()
+	private Rect2 SettingsCloseButton()
 	{
 		var content = SettingsContent();
 		return new Rect2(content.End - new Vector2(40, content.Size.Y - 4), new Vector2(40, 40));
+	}
+
+	public void HandleInput(InputEvent inputEvent)
+	{
+		if (_draggingVolume && inputEvent is InputEventMouseMotion motion)
+		{
+			SetVolumeFromMouse(motion.Position.X);
+			return;
+		}
+		if (inputEvent is InputEventKey key && key.Pressed && !key.Echo)
+		{
+			if (key.Keycode == Key.F1 || key.Keycode == Key.Escape) { CloseVolumeDrag(); EditingAction = null; EmitSignal(SignalName.CloseRequested); return; }
+			if (EditingAction != null) { Input.Rebind(EditingAction, key.Keycode); EditingAction = null; Refresh(); return; }
+			if (key.Keycode == Key.Tab) { CloseVolumeDrag(); Tab = 1 - Tab; Refresh(); }
+			return;
+		}
+		if (inputEvent is not InputEventMouseButton mouse) return;
+		if (!mouse.Pressed) { CloseVolumeDrag(); return; }
+		if (mouse.ButtonIndex == MouseButton.Left && SettingsCloseButton().HasPoint(mouse.Position))
+		{
+			CloseVolumeDrag(); EditingAction = null; EmitSignal(SignalName.CloseRequested); return;
+		}
+		for (var i = 0; i < 2; i++)
+			if (mouse.ButtonIndex == MouseButton.Left && SettingsTab(i).HasPoint(mouse.Position))
+			{
+				CloseVolumeDrag(); Tab = i; EditingAction = null; Refresh(); return;
+			}
+		if (EditingAction != null) { Input.Rebind(EditingAction, mouse.ButtonIndex); EditingAction = null; }
+		else SelectRow(mouse.Position, mouse.ButtonIndex);
+		Refresh();
+	}
+
+	private void SelectRow(Vector2 mouse, MouseButton button)
+	{
+		if (Tab == 0)
+		{
+			if (button == MouseButton.Left && ResolutionRow().HasPoint(mouse)) EmitSignal(SignalName.ResolutionCycleRequested);
+			else
+			{
+				var track = VolumeTrack();
+				var hitArea = new Rect2(track.Position.X, VolumeRow().Position.Y, track.Size.X, VolumeRow().Size.Y);
+				if (button == MouseButton.Left && hitArea.HasPoint(mouse)) { _draggingVolume = true; SetVolumeFromMouse(mouse.X); }
+			}
+			return;
+		}
+		for (var i = 0; i < ActionBindings.Definitions.Length; i++)
+			if (SettingRow(i).HasPoint(mouse)) { EditingAction = ActionBindings.Definitions[i].Action; return; }
+	}
+
+	private void SetVolumeFromMouse(float mouseX)
+	{
+		var track = VolumeTrack();
+		MasterVolume = Mathf.Clamp((mouseX - track.Position.X) / track.Size.X, 0, 1);
+		EmitSignal(SignalName.VolumeChanged, MasterVolume);
+		Refresh();
+	}
+
+	private void CloseVolumeDrag()
+	{
+		if (!_draggingVolume) return;
+		_draggingVolume = false;
+		EmitSignal(SignalName.VolumeCommitted);
 	}
 
 	public void Refresh()

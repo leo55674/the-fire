@@ -30,57 +30,57 @@ public partial class Main : Node2D
 	private static Rect2 ComboPlayButton(Rect2 panel) => new(panel.End - new Vector2(207, 60), new Vector2(112, 38));
 	private static Rect2 ComboCloseButton(Rect2 panel) => new(panel.End - new Vector2(86, 60), new Vector2(64, 38));
 
-	private void DrawCombo(Vector2 size)
+	private void DrawCombo(CanvasItem canvas, Vector2 size)
 	{
 		var font = _uiFont ?? ThemeDB.FallbackFont;
 		var panel = ComboPanel(size);
 		var library = ComboLibraryArea(panel);
 		var order = ComboOrderArea(panel);
-		DrawRect(new Rect2(Vector2.Zero, size), new Color("03070d", .76f));
-		DrawRect(panel, new Color("111c27"));
-		DrawRect(panel, new Color("a78960"), false, 2);
-		DrawString(font, panel.Position + new Vector2(24, 42), "剑式搭配", HorizontalAlignment.Left, -1, 27, new Color("f3dfb5"));
-		DrawString(font, panel.Position + new Vector2(24, 74), "固定招式 · 点击添加", HorizontalAlignment.Left, library.Size.X, 17, new Color("c8d7de"));
-		DrawString(font, new Vector2(order.Position.X, panel.Position.Y + 74), $"出招顺序 · {_session.SwordCombo.Count}/{GameSession.MaxSwordComboSteps}", HorizontalAlignment.Left, order.Size.X, 17, new Color("c8d7de"));
+		canvas.DrawRect(new Rect2(Vector2.Zero, size), new Color("03070d", .76f));
+		canvas.DrawRect(panel, new Color("111c27"));
+		canvas.DrawRect(panel, new Color("a78960"), false, 2);
+		canvas.DrawString(font, panel.Position + new Vector2(24, 42), "剑式搭配", HorizontalAlignment.Left, -1, 27, new Color("f3dfb5"));
+		canvas.DrawString(font, panel.Position + new Vector2(24, 74), "固定招式 · 点击添加", HorizontalAlignment.Left, library.Size.X, 17, new Color("c8d7de"));
+		canvas.DrawString(font, new Vector2(order.Position.X, panel.Position.Y + 74), $"出招顺序 · {_session.SwordCombo.Count}/{GameSession.MaxSwordComboSteps}", HorizontalAlignment.Left, order.Size.X, 17, new Color("c8d7de"));
 
 		for (var i = 0; i <= GameSession.PresetSwordMoveCount; i++)
 		{
 			var row = ComboRow(library, i);
 			var enabled = i != GameSession.CustomSwordMoveId || _session.HasRecordedSword;
 			var focused = _comboFocusColumn == 0 && _comboFocusIndex == i;
-			DrawRect(row, focused ? new Color("365262") : new Color("1d303d"));
-			DrawRect(row, focused ? new Color("f1d396") : new Color("506875"), false, 1);
+			canvas.DrawRect(row, focused ? new Color("365262") : new Color("1d303d"));
+			canvas.DrawRect(row, focused ? new Color("f1d396") : new Color("506875"), false, 1);
 			var name = GameSession.SwordMoveName(i);
 			if (!enabled) name += " · 先录制";
-			DrawString(font, row.Position + new Vector2(12, row.Size.Y / 2 + 6), $"{i + 1:00}  {name}", HorizontalAlignment.Left, row.Size.X - 46, 16, enabled ? Colors.White : new Color("84939d"));
-			DrawString(font, row.End - new Vector2(32, row.Size.Y / 2 - 6), "+", HorizontalAlignment.Left, 24, 20, enabled ? new Color("f6d48d") : new Color("72818a"));
+			canvas.DrawString(font, row.Position + new Vector2(12, row.Size.Y / 2 + 6), $"{i + 1:00}  {name}", HorizontalAlignment.Left, row.Size.X - 46, 16, enabled ? Colors.White : new Color("84939d"));
+			canvas.DrawString(font, row.End - new Vector2(32, row.Size.Y / 2 - 6), "+", HorizontalAlignment.Left, 24, 20, enabled ? new Color("f6d48d") : new Color("72818a"));
 		}
 
 		for (var i = 0; i < _session.SwordCombo.Count; i++)
 		{
 			var row = ComboRow(order, i);
 			var focused = _comboFocusColumn == 1 && _comboFocusIndex == i;
-			DrawRect(row, focused ? new Color("594a37") : new Color("27313b"));
-			DrawRect(row, focused ? new Color("f1d396") : new Color("556572"), false, 1);
-			DrawString(font, row.Position + new Vector2(12, row.Size.Y / 2 + 6), $"{i + 1:00}  {GameSession.SwordMoveName(_session.SwordCombo[i])}", HorizontalAlignment.Left, row.Size.X - 125, 16, Colors.White);
+			canvas.DrawRect(row, focused ? new Color("594a37") : new Color("27313b"));
+			canvas.DrawRect(row, focused ? new Color("f1d396") : new Color("556572"), false, 1);
+			canvas.DrawString(font, row.Position + new Vector2(12, row.Size.Y / 2 + 6), $"{i + 1:00}  {GameSession.SwordMoveName(_session.SwordCombo[i])}", HorizontalAlignment.Left, row.Size.X - 125, 16, Colors.White);
 			for (var button = 0; button < 3; button++)
 			{
 				var rect = ComboRowButton(row, button);
-				DrawRect(rect, button == 2 ? new Color("643d42") : new Color("3a5360"));
-				DrawString(font, rect.Position + new Vector2(0, rect.Size.Y / 2 + 6), button == 0 ? "上" : button == 1 ? "下" : "删", HorizontalAlignment.Center, rect.Size.X, 15, Colors.White);
+				canvas.DrawRect(rect, button == 2 ? new Color("643d42") : new Color("3a5360"));
+				canvas.DrawString(font, rect.Position + new Vector2(0, rect.Size.Y / 2 + 6), button == 0 ? "上" : button == 1 ? "下" : "删", HorizontalAlignment.Center, rect.Size.X, 15, Colors.White);
 			}
 		}
-		DrawString(font, panel.End - new Vector2(panel.Size.X - 24, 89), _comboNotice, HorizontalAlignment.Left, panel.Size.X - 48, 14, new Color("ddc89f"));
-		DrawString(font, panel.End - new Vector2(panel.Size.X - 24, 42), "J/Esc 关闭  ·  方向键选中  ·  Enter 添加  ·  Shift+上下调序  ·  Delete 删除  ·  R 出招", HorizontalAlignment.Left, panel.Size.X - 240, 13, new Color("aebfc7"));
-		DrawComboButton(ComboPlayButton(panel), "开始连招", new Color("765834"));
-		DrawComboButton(ComboCloseButton(panel), "关闭", new Color("344b58"));
+		canvas.DrawString(font, panel.End - new Vector2(panel.Size.X - 24, 89), _comboNotice, HorizontalAlignment.Left, panel.Size.X - 48, 14, new Color("ddc89f"));
+		canvas.DrawString(font, panel.End - new Vector2(panel.Size.X - 24, 42), "J/Esc 关闭  ·  方向键选中  ·  Enter 添加  ·  Shift+上下调序  ·  Delete 删除  ·  R 出招", HorizontalAlignment.Left, panel.Size.X - 240, 13, new Color("aebfc7"));
+		DrawComboButton(canvas, ComboPlayButton(panel), "开始连招", new Color("765834"));
+		DrawComboButton(canvas, ComboCloseButton(panel), "关闭", new Color("344b58"));
 	}
 
-	private void DrawComboButton(Rect2 rect, string label, Color color)
+	private void DrawComboButton(CanvasItem canvas, Rect2 rect, string label, Color color)
 	{
-		DrawRect(rect, color);
-		DrawRect(rect, new Color("e4c992"), false, 1);
-		DrawString(_uiFont ?? ThemeDB.FallbackFont, rect.Position + new Vector2(0, rect.Size.Y / 2 + 6), label, HorizontalAlignment.Center, rect.Size.X, 16, Colors.White);
+		canvas.DrawRect(rect, color);
+		canvas.DrawRect(rect, new Color("e4c992"), false, 1);
+		canvas.DrawString(_uiFont ?? ThemeDB.FallbackFont, rect.Position + new Vector2(0, rect.Size.Y / 2 + 6), label, HorizontalAlignment.Center, rect.Size.X, 16, Colors.White);
 	}
 
 	private void HandleComboInput(InputEvent inputEvent)

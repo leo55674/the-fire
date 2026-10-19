@@ -6,11 +6,11 @@ public partial class GameSession : Node
 {
 	private void HandleInteractions(float dt, bool moved)
 	{
-		var searchPressed = _input.Pressed("search");
-		var feed = _input.Pressed("feed"); var upgrade = _input.Pressed("upgrade");
-		var burnName = _input.Pressed("burn_name"); var returnName = _input.Pressed("return_name");
-		var torch = _input.Pressed("torch"); var campfire = _input.Pressed("campfire");
-		var switchSword = _input.Pressed("switch_sword");
+		var searchPressed = _commands.Pressed("search");
+		var feed = _commands.Pressed("feed"); var upgrade = _commands.Pressed("upgrade");
+		var burnName = _commands.Pressed("burn_name"); var returnName = _commands.Pressed("return_name");
+		var torch = _commands.Pressed("torch"); var campfire = _commands.Pressed("campfire");
+		var switchSword = _commands.Pressed("switch_sword");
 		if (Fuel <= 0) return;
 		if (switchSword && SwordState == SwordMode.Following)
 		{
@@ -27,7 +27,7 @@ public partial class GameSession : Node
 		{
 			_inventory.Remove("wood", FireLevel * _balance.FireUpgradeWoodPerLevel); FireLevel++; Fuel = _balance.MaxFuel;
 			Message = FireLevel == _balance.MaxFireLevel ? "剑冢终阶开启，最终剑潮开始。" : "剑冢阵眼升阶。";
-			if (FireLevel == _balance.MaxFireLevel) { FinalNight = _balance.FinalNightDuration; for (var i = 0; i < _balance.FinalNightInitialEnemyCount; i++) SpawnEnemy(); }
+			if (FireLevel == _balance.MaxFireLevel) { FinalNight = _balance.FinalNightDuration; for (var i = 0; i < _balance.FinalNightInitialEnemyCount; i++) _enemySystem.Spawn(GroundY); }
 		}
 		if (NameFound && Player.DistanceTo(new Vector2(430, GroundY)) < 60)
 		{
@@ -41,7 +41,7 @@ public partial class GameSession : Node
 	private void UpdateSearch(bool pressed, bool moved, float dt)
 	{
 		var chest = Chests.Find(candidate => Player.DistanceTo(candidate.Position) < _balance.SearchRange);
-		var corpse = Enemies.Find(candidate => candidate.IsDying && Player.DistanceTo(candidate.Position) < _balance.SearchRange);
+		var corpse = _enemySystem.FindCorpseNear(Player, _balance.SearchRange);
 		object target = chest;
 		if (corpse != null && (chest == null || Player.DistanceTo(corpse.Position) < Player.DistanceTo(chest.Position))) target = corpse;
 		if (target == null)
@@ -60,8 +60,8 @@ public partial class GameSession : Node
 		}
 		_searchTarget = target;
 		var targetName = target is ChestState ? "宝箱" : "剑煞残骸";
-		var searchKey = _input.LabelFor("search");
-		var alreadySearched = target is ChestState searchedChest ? searchedChest.Searched : ((EnemyState)target).Searched;
+		var searchKey = _commands.SearchLabel;
+		var alreadySearched = target is ChestState searchedChest ? searchedChest.Searched : ((EnemySystem.EnemyState)target).Searched;
 		if (alreadySearched)
 		{
 			_searching = false;
@@ -69,7 +69,7 @@ public partial class GameSession : Node
 			SearchPrompt = $"按 {searchKey} 再次查看{targetName}";
 			if (pressed)
 			{
-				var contents = target is ChestState chestTarget ? chestTarget.Loot : ((EnemyState)target).Loot;
+				var contents = target is ChestState chestTarget ? chestTarget.Loot : ((EnemySystem.EnemyState)target).Loot;
 				OpenLoot(contents);
 				Message = contents.Exists(stack => stack != null) ? $"重新打开{targetName}。" : $"{targetName}已经搜空。";
 			}
@@ -99,18 +99,17 @@ public partial class GameSession : Node
 				: foundHeavySword ? $"搜刮宝箱，获得 {amount} 块剑骸和重剑胚。"
 				: $"搜刮宝箱，获得 {amount} 块剑骸。";
 		}
-		else if (target is EnemyState foundCorpse)
+		else if (target is EnemySystem.EnemyState foundCorpse)
 		{
 			var amount = _random.Next(_balance.CorpseWoodMin, _balance.CorpseWoodMaxExclusive);
-			Inventory.AddTo(foundCorpse.Loot, "wood", amount);
-			foundCorpse.Searched = true;
+			_enemySystem.SearchCorpse(foundCorpse, amount);
 			Message = $"搜刮剑煞残骸，获得 {amount} 块剑骸。";
 		}
 		_searchTarget = null;
 		_searchProgress = 0;
 		_searching = false;
 		SearchPrompt = "";
-		OpenLoot(target is ChestState chestContents ? chestContents.Loot : ((EnemyState)target).Loot);
+		OpenLoot(target is ChestState chestContents ? chestContents.Loot : ((EnemySystem.EnemyState)target).Loot);
 	}
 
 	private void OpenLoot(List<Inventory.Stack> contents)
@@ -118,7 +117,6 @@ public partial class GameSession : Node
 		_lootItems = contents;
 		LootOpen = true;
 		InventoryOpen = true;
-		Input.MouseMode = Input.MouseModeEnum.Visible;
 	}
 
 
@@ -126,18 +124,17 @@ public partial class GameSession : Node
 	{
 		Fuel = _balance.StartingFuel; Ember = _balance.StartingEmber; Health = _balance.StartingHealth; _inventory.Reset(); FireLevel = _balance.StartingFireLevel; DreamAsh = 0; FinalNight = 0; NameFound = true;
 		_lootItems = new List<Inventory.Stack>(); LootOpen = false; InventoryOpen = false;
-		Player = MainFire; Enemies.Clear(); Fires.Clear();
+		Player = MainFire; _enemySystem.Reset(); Fires.Clear();
 		_dashRemaining = 0; _dashCooldown = 0; IsDashing = false;
+		PlayerMoving = false;
 		SwordState = SwordMode.Following; SwordPosition = SwordFollowPosition(); CameraFocus = Player; _swordControlBlend = 0;
 		ReplaySwordPosition = ReplaySwordFollowPosition(); ReplaySwordVelocity = Vector2.Zero;
 		_recordingSamples.Clear(); _recordedSword.Clear(); _playingSword = Array.Empty<SwordSample>(); _replaySequence = Array.Empty<SwordSample[]>();
 		_swordCombo.RemoveAll(id => id == CustomSwordMoveId); ComboOpen = false;
 		_replayActive = false; _replayReturning = false; _replayTime = 0; _replayHitCooldown = 0;
-		Input.MouseMode = Input.MouseModeEnum.Visible;
 		Chests.Clear();
 		SpawnChestNearPlayer();
 		SpawnChestNearPlayer();
-		_spawnTimer = _balance.EnemyInitialSpawnDelay;
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
 		_searchTarget = null;
 		_searchProgress = 0;

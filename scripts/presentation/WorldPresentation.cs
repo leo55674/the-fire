@@ -14,7 +14,6 @@ public partial class WorldPresentation : Node2D
 	[Export] private Texture2D _swordTexture;
 	[Export] private Godot.Collections.Array<Texture2D> _mainFireTextures;
 	[Export] private Godot.Collections.Array<PackedScene> _enemyScenes;
-	[Export] private ActionBindings _input;
 	[Export] private Node2D _road;
 	[Export] private Polygon2D _ground;
 	[Export] private Node2D _trees;
@@ -299,7 +298,7 @@ public partial class WorldPresentation : Node2D
 
 	private void UpdatePlayer(GameSession session)
 	{
-		var moving = _input.Held("left") || _input.Held("right") || session.IsDashing;
+		var moving = session.PlayerMoving;
 		_player.Present(Screen(session, session.Player), false, session.HurtTime > 0, moving, session.IsDashing, session.PlayerFacing < 0);
 		_axeSwing.Visible = session.SwingTime > 0;
 		if (!_axeSwing.Visible) return;
