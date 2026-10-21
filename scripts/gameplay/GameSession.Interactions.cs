@@ -4,23 +4,25 @@ using System.Collections.Generic;
 
 public partial class GameSession : Node
 {
-	private void HandleInteractions(float dt, bool moved)
+	private void HandleInteractions()
 	{
 		var searchPressed = _commands.Pressed("search");
 		var feed = _commands.Pressed("feed"); var upgrade = _commands.Pressed("upgrade");
 		var burnName = _commands.Pressed("burn_name"); var returnName = _commands.Pressed("return_name");
 		var torch = _commands.Pressed("torch"); var campfire = _commands.Pressed("campfire");
-		var switchSword = _commands.Pressed("switch_sword");
 		if (Fuel <= 0) return;
-		if (switchSword && SwordState == SwordMode.Following)
+		if (_blacksmith.IsInRange(Player, GroundY, _balance.BlacksmithRange))
 		{
-			SwordFrame = SwordFrame == SwordArchetype.Light ? SwordArchetype.Heavy : SwordArchetype.Light;
-			EmitSignal(SignalName.SoundCueRequested, "sword_switch");
-			Message = SwordFrame == SwordArchetype.Light
-				? $"切换轻剑胚：转向灵敏，伤害 {_balance.LightSwordDamage:0}。"
-				: $"切换重剑胚：惯性明显，伤害 {_balance.HeavySwordDamage:0}。";
+			SearchPrompt = SwordCount switch
+			{
+				1 => $"按 {_commands.SearchLabel} 打造霜华（需要 {_balance.SwordCraftMaterialCost} 份铸剑铁料；现有 {SwordIron}）",
+				2 => $"按 {_commands.SearchLabel} 打造碧澜（需要 {_balance.SwordCraftMaterialCost} 份铸剑铁料；现有 {SwordIron}）",
+				_ => "铁匠铺：三剑已齐"
+			};
+		if (searchPressed) Message = _weaponSystem.CraftNext(_inventory, _balance.SwordCraftMaterialCost);
+			return;
 		}
-		UpdateSearch(searchPressed, moved, dt);
+		UpdateSearch(searchPressed);
 		var atFire = Player.DistanceTo(MainFire) < 75;
 		if (atFire && feed && Wood > 0) { _inventory.Remove("wood", 1); Fuel = Mathf.Min(_balance.MaxFuel, Fuel + _balance.FuelFeedAmount); Message = "剑骸化入阵眼，剑冢灵蕴恢复。"; }
 		if (atFire && upgrade && Wood >= FireLevel * _balance.FireUpgradeWoodPerLevel && FireLevel < _balance.MaxFireLevel)
@@ -38,7 +40,7 @@ public partial class GameSession : Node
 		if (campfire && Wood >= _balance.CampfireWoodCost) PlaceFire(_balance.CampfireLifetime, _balance.CampfireRadius, _balance.CampfireWoodCost, "临时剑阵暂时压制了附近剑煞。");
 	}
 
-	private void UpdateSearch(bool pressed, bool moved, float dt)
+	private void UpdateSearch(bool pressed)
 	{
 		var chest = Chests.Find(candidate => Player.DistanceTo(candidate.Position) < _balance.SearchRange);
 		var corpse = _enemySystem.FindCorpseNear(Player, _balance.SearchRange);
@@ -46,88 +48,51 @@ public partial class GameSession : Node
 		if (corpse != null && (chest == null || Player.DistanceTo(corpse.Position) < Player.DistanceTo(chest.Position))) target = corpse;
 		if (target == null)
 		{
-			_searchTarget = null;
-			_searchProgress = 0;
-			_searching = false;
 			SearchPrompt = "";
 			if (pressed) Message = "附近没有可搜刮的宝箱或尸体。";
 			return;
 		}
-		if (!ReferenceEquals(_searchTarget, target))
-		{
-			_searchProgress = 0;
-			_searching = false;
-		}
-		_searchTarget = target;
 		var targetName = target is ChestState ? "宝箱" : "剑煞残骸";
 		var searchKey = _commands.SearchLabel;
 		var alreadySearched = target is ChestState searchedChest ? searchedChest.Searched : ((EnemySystem.EnemyState)target).Searched;
+		SearchPrompt = alreadySearched ? $"按 {searchKey} 查看{targetName}" : $"按 {searchKey} 打开并搜索{targetName}";
+		if (!pressed) return;
+		var contents = target is ChestState chestTarget ? chestTarget.Loot : ((EnemySystem.EnemyState)target).Loot;
 		if (alreadySearched)
 		{
-			_searching = false;
-			_searchProgress = 0;
-			SearchPrompt = $"按 {searchKey} 再次查看{targetName}";
-			if (pressed)
-			{
-				var contents = target is ChestState chestTarget ? chestTarget.Loot : ((EnemySystem.EnemyState)target).Loot;
-				OpenLoot(contents);
-				Message = contents.Exists(stack => stack != null) ? $"重新打开{targetName}。" : $"{targetName}已经搜空。";
-			}
-			return;
+			_lootSystem.Reopen(contents, targetName, _balance.SearchDuration);
+			Message = contents.Exists(stack => stack != null) ? $"重新打开{targetName}。" : $"{targetName}已经搜空。";
 		}
-		if (moved && _searching)
+		else if (target is ChestState foundChest)
 		{
-			_searching = false;
-			_searchProgress = 0;
-			Message = "移动打断了搜刮。";
-		}
-		if (pressed && !moved) _searching = true;
-		SearchPrompt = _searching ? $"正在搜刮{targetName}（移动将中断）" : $"按一下 {searchKey} 搜刮{targetName}";
-		if (!_searching) return;
-		_searchProgress += dt;
-		if (_searchProgress < _balance.SearchDuration) return;
-		if (target is ChestState foundChest)
-		{
-			var amount = _random.Next(_balance.ChestWoodMin, _balance.ChestWoodMaxExclusive);
-			Inventory.AddTo(foundChest.Loot, "wood", amount);
-			var bonus = _random.Next(_balance.ChestBonusRollCount);
-			if (bonus == 0) Inventory.AddTo(foundChest.Loot, "healing_potion", 1);
-			var foundHeavySword = bonus == 1 && _inventory.Count("heavy_sword") == 0;
-			if (foundHeavySword) Inventory.AddTo(foundChest.Loot, "heavy_sword", 1);
+			foundChest.Loot = _lootSystem.CreateChestLoot(_balance, _random);
 			foundChest.Searched = true;
-			Message = bonus == 0 ? $"搜刮宝箱，获得 {amount} 块剑骸和一枚疗伤丹。"
-				: foundHeavySword ? $"搜刮宝箱，获得 {amount} 块剑骸和重剑胚。"
-				: $"搜刮宝箱，获得 {amount} 块剑骸。";
+			_lootSystem.Open(foundChest.Loot, targetName, _balance.SearchDuration);
+			Message = "宝箱已打开，正在逐件搜索物资。";
 		}
 		else if (target is EnemySystem.EnemyState foundCorpse)
 		{
 			var amount = _random.Next(_balance.CorpseWoodMin, _balance.CorpseWoodMaxExclusive);
-			_enemySystem.SearchCorpse(foundCorpse, amount);
-			Message = $"搜刮剑煞残骸，获得 {amount} 块剑骸。";
+			foundCorpse.Loot = _lootSystem.CreateCorpseLoot(amount);
+			foundCorpse.Searched = true;
+			_lootSystem.Open(foundCorpse.Loot, targetName, _balance.SearchDuration);
+			Message = "残骸已打开，正在逐件搜索物资。";
 		}
-		_searchTarget = null;
-		_searchProgress = 0;
-		_searching = false;
-		SearchPrompt = "";
-		OpenLoot(target is ChestState chestContents ? chestContents.Loot : ((EnemySystem.EnemyState)target).Loot);
-	}
-
-	private void OpenLoot(List<Inventory.Stack> contents)
-	{
-		_lootItems = contents;
-		LootOpen = true;
 		InventoryOpen = true;
+		SearchPrompt = "";
 	}
 
 
 	private void Reset()
 	{
 		Fuel = _balance.StartingFuel; Ember = _balance.StartingEmber; Health = _balance.StartingHealth; _inventory.Reset(); FireLevel = _balance.StartingFireLevel; DreamAsh = 0; FinalNight = 0; NameFound = true;
-		_lootItems = new List<Inventory.Stack>(); LootOpen = false; InventoryOpen = false;
+		_weaponSystem.ResetEquipment();
+		_lootSystem.Close(); InventoryOpen = false;
 		Player = MainFire; _enemySystem.Reset(); Fires.Clear();
 		_dashRemaining = 0; _dashCooldown = 0; IsDashing = false;
 		PlayerMoving = false;
 		SwordState = SwordMode.Following; SwordPosition = SwordFollowPosition(); CameraFocus = Player; _swordControlBlend = 0;
+		_weaponSystem.UpdateFollowers(Player, PlayerFacing, 1);
 		ReplaySwordPosition = ReplaySwordFollowPosition(); ReplaySwordVelocity = Vector2.Zero;
 		_recordingSamples.Clear(); _recordedSword.Clear(); _playingSword = Array.Empty<SwordSample>(); _replaySequence = Array.Empty<SwordSample[]>();
 		_swordCombo.RemoveAll(id => id == CustomSwordMoveId); ComboOpen = false;
@@ -136,9 +101,6 @@ public partial class GameSession : Node
 		SpawnChestNearPlayer();
 		SpawnChestNearPlayer();
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
-		_searchTarget = null;
-		_searchProgress = 0;
-		_searching = false;
 		SearchPrompt = "";
 		Message = "神识在剑冢苏醒，新的远征开始了。";
 	}

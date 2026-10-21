@@ -19,12 +19,10 @@
 [ext_resource type="AudioStream" uid="uid://biyy0xldr8n68" path="res://assets/audio/sfx/combat/sfx_sword_launch.wav" id="26_launch"]
 [ext_resource type="Script" uid="uid://h0ufbwso4mq7" path="res://scripts/gameplay/Inventory.cs" id="27_inventory"]
 [ext_resource type="AudioStream" uid="uid://3msptx0rw773" path="res://assets/audio/sfx/combat/sfx_spirit_hurt.wav" id="28_hurt"]
-[ext_resource type="Texture2D" uid="uid://dlg1mgdq4e27s" path="res://assets/art/runtime/weapons/swords/sword_01_soulblade.png" id="29_sword_01"]
 [ext_resource type="AudioStream" uid="uid://ctqqfkt8abshd" path="res://assets/audio/sfx/combat/sfx_sword_hit.wav" id="30_hit"]
 [ext_resource type="AudioStream" uid="uid://bt2lv8hji84s0" path="res://assets/audio/sfx/combat/sfx_sword_defeat.wav" id="31_defeat"]
 [ext_resource type="AudioStream" uid="uid://ci63kses4cdkg" path="res://assets/audio/sfx/sword/sfx_spirit_enter_sword.wav" id="32_control"]
 [ext_resource type="AudioStream" uid="uid://cti65dmjklmp" path="res://assets/audio/sfx/sword/sfx_sword_return.wav" id="33_return"]
-[ext_resource type="AudioStream" uid="uid://dl15bw3x212yw" path="res://assets/audio/sfx/sword/sfx_sword_frame_switch.wav" id="34_switch"]
 [ext_resource type="Resource" uid="uid://cfewfvekymwol" path="res://resources/balance/default_balance.tres" id="35_balance"]
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/Hunter.tscn" id="36_hunter"]
 [ext_resource type="PackedScene" uid="uid://bgcbncyj8qs0g" path="res://scenes/ui/Settings.tscn" id="37_settings"]
@@ -32,6 +30,11 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/Thief.tscn" id="39_thief"]
 [ext_resource type="Script" uid="uid://dxso0lw7flwtq" path="res://scripts/gameplay/EnemySystem.cs" id="40_enemies"]
 [ext_resource type="Script" uid="uid://dgbeg57b354h4" path="res://scripts/ui/LayeredPanelCanvas.cs" id="41_panel_canvas"]
+[ext_resource type="PackedScene" path="res://scenes/actors/weapons/FlyingSword.tscn" id="45_sword_scene"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Blacksmith.tscn" id="46_blacksmith_scene"]
+[ext_resource type="Script" path="res://scripts/gameplay/weapons/WeaponSystem.cs" id="47_weapon_system"]
+[ext_resource type="PackedScene" path="res://scenes/ui/LootPanel.tscn" id="51_loot_panel"]
+[ext_resource type="Script" path="res://scripts/gameplay/LootSystem.cs" id="52_loot_system"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tree_1"]
 atlas = ExtResource("9_trees")
@@ -45,7 +48,7 @@ region = Rect2(388, 44, 298, 574)
 atlas = ExtResource("9_trees")
 region = Rect2(714, 126, 288, 490)
 
-[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas")]
+[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas", "_lootPanel")]
 script = ExtResource("1_main")
 _input = NodePath("ActionBindings")
 _session = NodePath("GameSession")
@@ -58,10 +61,14 @@ _startButtonView = NodePath("Interface/MainMenu/StartButton")
 _settingsButtonView = NodePath("Interface/MainMenu/SettingsButton")
 _exitButtonView = NodePath("Interface/MainMenu/ExitButton")
 _panelCanvas = NodePath("PanelCanvas")
+_lootPanel = NodePath("LootPanel")
 
 [node name="PanelCanvas" type="Node2D" parent="." unique_id=364377465]
 z_index = 5
 script = ExtResource("41_panel_canvas")
+
+[node name="LootPanel" parent="." instance=ExtResource("51_loot_panel")]
+Session = NodePath("../GameSession")
 
 [node name="ActionBindings" type="Node" parent="." unique_id=1966097770]
 script = ExtResource("3_input")
@@ -69,16 +76,25 @@ script = ExtResource("3_input")
 [node name="Inventory" type="Node" parent="." unique_id=158398390]
 script = ExtResource("27_inventory")
 
-[node name="GameSession" type="Node" parent="." unique_id=1269228634 node_paths=PackedStringArray("_inventory", "_enemySystem")]
+[node name="GameSession" type="Node" parent="." unique_id=1269228634 node_paths=PackedStringArray("_inventory", "_weaponSystem", "_enemySystem", "_lootSystem", "_blacksmith")]
 script = ExtResource("4_session")
 _inventory = NodePath("../Inventory")
+_weaponSystem = NodePath("WeaponSystem")
 _enemySystem = NodePath("EnemySystem")
+_lootSystem = NodePath("LootSystem")
+_blacksmith = NodePath("../World/Environment/Blacksmith")
 _balanceResource = ExtResource("35_balance")
 
 [node name="EnemySystem" type="Node" parent="GameSession" unique_id=1597592388]
 script = ExtResource("40_enemies")
 
-[node name="Audio" type="Node" parent="." unique_id=2029655943 node_paths=PackedStringArray("_session", "_music", "_swordLaunch", "_swordHit", "_swordDefeat", "_controlEnter", "_swordReturn", "_swordSwitch", "_spiritHurt")]
+[node name="WeaponSystem" type="Node" parent="GameSession"]
+script = ExtResource("47_weapon_system")
+
+[node name="LootSystem" type="Node" parent="GameSession"]
+script = ExtResource("52_loot_system")
+
+[node name="Audio" type="Node" parent="." unique_id=2029655943 node_paths=PackedStringArray("_session", "_music", "_swordLaunch", "_swordHit", "_swordDefeat", "_controlEnter", "_swordReturn", "_spiritHurt")]
 script = ExtResource("24_audio")
 _session = NodePath("../GameSession")
 _music = NodePath("Music")
@@ -87,7 +103,6 @@ _swordHit = NodePath("SwordHit")
 _swordDefeat = NodePath("SwordDefeat")
 _controlEnter = NodePath("ControlEnter")
 _swordReturn = NodePath("SwordReturn")
-_swordSwitch = NodePath("SwordSwitch")
 _spiritHurt = NodePath("SpiritHurt")
 
 [node name="Music" type="AudioStreamPlayer" parent="Audio" unique_id=857706577]
@@ -113,10 +128,6 @@ volume_db = -4.0
 [node name="SwordReturn" type="AudioStreamPlayer" parent="Audio" unique_id=555394021]
 stream = ExtResource("33_return")
 volume_db = -4.0
-
-[node name="SwordSwitch" type="AudioStreamPlayer" parent="Audio" unique_id=2096716725]
-stream = ExtResource("34_switch")
-volume_db = -6.0
 
 [node name="SpiritHurt" type="AudioStreamPlayer" parent="Audio" unique_id=577073363]
 stream = ExtResource("28_hurt")
@@ -148,19 +159,20 @@ texture = ExtResource("7_game")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="World" type="Node2D" parent="." unique_id=1139518992 node_paths=PackedStringArray("_road", "_ground", "_trees", "_mainFire", "_nameFragment", "_temporaryFires", "_enemies", "_chests", "_projectiles", "_axeSwing", "_player")]
+[node name="World" type="Node2D" parent="." unique_id=1139518992 node_paths=PackedStringArray("_road", "_ground", "_trees", "_mainFire", "_blacksmith", "_nameFragment", "_temporaryFires", "_enemies", "_chests", "_projectiles", "_axeSwing", "_player")]
 visible = false
 z_index = -1
 script = ExtResource("5_world")
 _roadTexture = ExtResource("8_road")
 _treeAtlas = ExtResource("9_trees")
-_swordTexture = ExtResource("29_sword_01")
+_flyingSwordScene = ExtResource("45_sword_scene")
 _mainFireTextures = Array[Texture2D]([ExtResource("10_fire_low"), ExtResource("11_fire_medium"), ExtResource("12_fire_high"), ExtResource("13_fire_blazing")])
 _enemyScenes = Array[PackedScene]([ExtResource("36_hunter"), ExtResource("38_extinguisher"), ExtResource("39_thief")])
 _road = NodePath("Environment/Road")
 _ground = NodePath("Environment/Ground")
 _trees = NodePath("Environment/Trees")
 _mainFire = NodePath("Environment/MainFire")
+_blacksmith = NodePath("Environment/Blacksmith")
 _nameFragment = NodePath("Environment/NameFragment")
 _temporaryFires = NodePath("DynamicEntities/TemporaryFires")
 _enemies = NodePath("DynamicEntities/Enemies")
@@ -174,6 +186,8 @@ _player = NodePath("Actors/PlayerPresentation")
 [node name="Ground" type="Polygon2D" parent="World/Environment" unique_id=2021894169]
 color = Color(0.0901961, 0.129412, 0.164706, 1)
 polygon = PackedVector2Array(0, 840, 1920, 840, 1920, 1080, 0, 1080)
+
+[node name="Blacksmith" parent="World/Environment" instance=ExtResource("46_blacksmith_scene")]
 
 [node name="Road" type="Node2D" parent="World/Environment" unique_id=1047413327]
 

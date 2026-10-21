@@ -25,23 +25,20 @@ public partial class Main : Node2D
 	[Export] private TextureRect _settingsButtonView;
 	[Export] private TextureRect _exitButtonView;
 	[Export] private LayeredPanelCanvas _panelCanvas;
+	[Export] private LootPanel _lootPanel;
 	private bool _mainMenuOpen = true;
 	private bool _settingsOpen;
 	private int _selectedMenuItem;
 	private int _resolutionIndex = 2;
 	private float _masterVolume = .8f;
-	private bool _inventorySplitMode;
-	private bool _inventoryDragFromLoot;
-	private int _inventoryDragSlot = -1;
-	private int _inventorySplitSource = -1;
-	private Inventory.Stack _inventoryDragStack;
 	private float _finalNight => _session.FinalNight;
 
 	public override void _Ready()
 	{
-		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null)
-			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, and LayeredPanelCanvas nodes.");
+		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null || _lootPanel == null)
+			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, LayeredPanelCanvas, and LootPanel nodes.");
 		_panelCanvas.DrawPanels = DrawLayeredPanels;
+		_lootPanel.Session = _session;
 		_menuButtonNormal = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png");
 		_menuButtonSelected = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_selected.png");
 		_settingsIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_settings.png");
@@ -105,7 +102,7 @@ public partial class Main : Node2D
 		}
 		if (@event is InputEventMouseButton mouseEvent)
 		{
-			if (_session.InventoryOpen) { HandleInventoryMouse(mouseEvent); return; }
+			if (_session.InventoryOpen) { _lootPanel.HandleInput(mouseEvent); return; }
 			if (!mouseEvent.Pressed) return;
 			if (mouseEvent.ButtonIndex == MouseButton.Left && GameExitButton().HasPoint(mouseEvent.Position))
 			{
@@ -220,7 +217,6 @@ public partial class Main : Node2D
 	private void DrawLayeredPanels(CanvasItem canvas)
 	{
 		var size = GetViewportRect().Size;
-		if (_session.InventoryOpen) DrawInventory(canvas, size);
 		if (_session.ComboOpen) DrawCombo(canvas, size);
 	}
 

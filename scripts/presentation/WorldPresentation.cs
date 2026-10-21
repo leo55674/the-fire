@@ -11,13 +11,14 @@ public partial class WorldPresentation : Node2D
 	};
 	[Export] private Texture2D _roadTexture;
 	[Export] private Texture2D _treeAtlas;
-	[Export] private Texture2D _swordTexture;
+	[Export] private PackedScene _flyingSwordScene;
 	[Export] private Godot.Collections.Array<Texture2D> _mainFireTextures;
 	[Export] private Godot.Collections.Array<PackedScene> _enemyScenes;
 	[Export] private Node2D _road;
 	[Export] private Polygon2D _ground;
 	[Export] private Node2D _trees;
 	[Export] private Sprite2D _mainFire;
+	[Export] private BlacksmithPresentation _blacksmith;
 	[Export] private Label _nameFragment;
 	[Export] private Node2D _temporaryFires;
 	[Export] private Node2D _enemies;
@@ -33,36 +34,40 @@ public partial class WorldPresentation : Node2D
 	private readonly List<ColorRect> _chestLids = new();
 	private readonly List<Vector2> _swordTrailPoints = new();
 	private readonly List<Vector2> _replayTrailPoints = new();
-	private Sprite2D _swordVisual;
-	private Sprite2D _replayVisual;
+	private FlyingSwordPresentation _swordVisual;
+	private FlyingSwordPresentation _replayVisual;
+	private readonly FlyingSwordPresentation[] _companionSwordVisuals = new FlyingSwordPresentation[2];
 	private Line2D _swordTrail;
 	private Line2D _replayTrail;
 	private Line2D _spiritLine;
 
 	public override void _Ready()
 	{
-		if (_enemyScenes == null || _enemyScenes.Count != 3 || _enemyScenes[0] == null || _enemyScenes[1] == null || _enemyScenes[2] == null || _swordTexture == null)
-			throw new InvalidOperationException("WorldPresentation requires three enemy scenes and the first sword texture.");
+		if (_enemyScenes == null || _enemyScenes.Count != 3 || _enemyScenes[0] == null || _enemyScenes[1] == null || _enemyScenes[2] == null || _flyingSwordScene == null || _blacksmith == null)
+			throw new InvalidOperationException("WorldPresentation requires three enemy scenes, the flying sword scene, and the blacksmith.");
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
 		_swordTrail = new Line2D { Name = "SwordTrail", Width = 5, DefaultColor = new Color("78dfff", .42f) };
 		_replayTrail = new Line2D { Name = "ReplaySwordTrail", Width = 4, DefaultColor = new Color("f4c978", .55f) };
 		_spiritLine = new Line2D { Name = "SpiritLine", Width = 2, DefaultColor = new Color("8be8ff", .5f) };
-		_swordVisual = new Sprite2D
-		{
-			Name = "Sword01Soulblade", Texture = _swordTexture, Scale = Vector2.One * .075f,
-			Offset = new Vector2(291, 16)
-		};
-		_replayVisual = new Sprite2D
-		{
-			Name = "ReplaySword", Texture = _swordTexture, Scale = Vector2.One * .065f,
-			Offset = new Vector2(291, 16), Modulate = new Color("ffd991", .82f)
-		};
+		_swordVisual = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
+		_swordVisual.Name = "Zhaoye";
+		_swordVisual.Configure(FlyingSwordPresentation.SwordVisual.Zhaoye);
+		_replayVisual = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
+		_replayVisual.Name = "ReplaySword";
+		_replayVisual.Configure(FlyingSwordPresentation.SwordVisual.ZhaoyeReplay);
 		_projectiles.AddChild(_swordTrail);
 		_projectiles.AddChild(_replayTrail);
 		_projectiles.AddChild(_spiritLine);
 		_projectiles.AddChild(_swordVisual);
 		_projectiles.AddChild(_replayVisual);
+		_companionSwordVisuals[0] = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
+		_companionSwordVisuals[0].Name = "Shuanghua";
+		_companionSwordVisuals[0].Configure(FlyingSwordPresentation.SwordVisual.Shuanghua);
+		_companionSwordVisuals[1] = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
+		_companionSwordVisuals[1].Name = "Bilan";
+		_companionSwordVisuals[1].Configure(FlyingSwordPresentation.SwordVisual.Bilan);
+		foreach (var sword in _companionSwordVisuals) _projectiles.AddChild(sword);
 	}
 
 	public void Sync(GameSession session, bool menuOpen)
@@ -75,13 +80,29 @@ public partial class WorldPresentation : Node2D
 		UpdateRoad(viewport, session);
 		UpdateTrees(session);
 		UpdateMainFire(session);
+		UpdateBlacksmith(session);
 		UpdateName(session);
 		UpdateFires(session);
 		UpdateEnemies(session);
 		UpdateChests(session);
 		UpdateSword(session);
+		UpdateCompanionSwords(session);
 		UpdateReplaySword(session);
 		UpdatePlayer(session);
+	}
+
+	private void UpdateBlacksmith(GameSession session)
+	{
+		_blacksmith.Present(Screen(session, session.BlacksmithPosition));
+	}
+
+	private void UpdateCompanionSwords(GameSession session)
+	{
+		for (var i = 0; i < _companionSwordVisuals.Length; i++)
+		{
+			var sword = _companionSwordVisuals[i];
+			sword.Present(Screen(session, session.CompanionSwordPositions[i]), -Mathf.Pi / 2, session.SwordCount > i + 1);
+		}
 	}
 
 	private Vector2 Screen(GameSession session, Vector2 world) =>
@@ -90,7 +111,6 @@ public partial class WorldPresentation : Node2D
 	private void UpdateSword(GameSession session)
 	{
 		var swordScreen = Screen(session, session.SwordPosition);
-		_swordVisual.Position = swordScreen;
 		var targetRotation = session.SwordState == GameSession.SwordMode.Following
 			? -Mathf.Pi / 2
 			: session.SwordVelocity.LengthSquared() > 1 ? session.SwordVelocity.Angle() : _swordVisual.Rotation;
@@ -99,7 +119,7 @@ public partial class WorldPresentation : Node2D
 			var lift = 1 - Mathf.Clamp(session.SwordFollowDistance / 180, 0, 1);
 			targetRotation = Mathf.LerpAngle(targetRotation, -Mathf.Pi / 2, lift);
 		}
-		_swordVisual.Rotation = Mathf.LerpAngle(_swordVisual.Rotation, targetRotation, .18f);
+		_swordVisual.Present(swordScreen, Mathf.LerpAngle(_swordVisual.Rotation, targetRotation, .18f), true);
 
 		if (session.IsSwordInFlight)
 		{

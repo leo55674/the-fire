@@ -131,12 +131,6 @@ public partial class EnemySystem : Node
 	public bool Damage(EnemyState enemy, float amount) =>
 		enemy.TakeDamage(amount, _balance.EnemyDamageFeedbackDuration, _balance.EnemyHurtDuration, _balance.EnemyUnclaimedCorpseLifetime);
 
-	public void SearchCorpse(EnemyState enemy, int wood)
-	{
-		Inventory.AddTo(enemy.Loot, "wood", wood);
-		enemy.Searched = true;
-	}
-
 	public void MoveToGround(Vector2 offset)
 	{
 		foreach (var enemy in _enemies) enemy.Position += offset;

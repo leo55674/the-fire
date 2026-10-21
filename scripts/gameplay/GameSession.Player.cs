@@ -57,7 +57,7 @@ public partial class GameSession : Node
 				_recordingSamples.Clear();
 				_recordingSamples.Add(new SwordSample(0, Vector2.Zero));
 				EmitSignal(SignalName.SoundCueRequested, "control_enter");
-				Message = "神识入剑：视角随剑，移鼠御剑，再按右键归剑。";
+				Message = "神识进入照夜：移动鼠标御剑，再按右键归剑。";
 			}
 		}
 		var controlBlendTarget = IsSwordControlled ? 1f : 0f;
@@ -94,7 +94,7 @@ public partial class GameSession : Node
 				_swordAttackHit = true;
 				var killed = _enemySystem.Damage(attackHit, SwordDamage);
 				EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
-				Message = killed ? "飞剑斩灭了一缕剑煞。" : $"飞剑造成 {SwordDamage:0} 点伤害。";
+				Message = killed ? "照夜斩灭了一缕剑煞。" : $"照夜造成 {SwordDamage:0} 点伤害。";
 			}
 			if (SwordPosition.DistanceTo(_swordAttackTarget) < 3) BeginSwordReturn(Message);
 			return;
@@ -117,12 +117,13 @@ public partial class GameSession : Node
 			_swordHitCooldown = _balance.SwordHitCooldown;
 			var killed = _enemySystem.Damage(hit, SwordDamage);
 			EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
-			Message = killed ? "飞剑贯穿了一缕剑煞。" : $"本命剑造成 {SwordDamage:0} 点伤害。";
+			Message = killed ? "照夜贯穿了一缕剑煞。" : $"照夜造成 {SwordDamage:0} 点伤害。";
 		}
 		if (Ember <= 0) BeginSwordReturn("神识耗尽，本命剑强制归剑。");
 	}
 
 	private Vector2 SwordFollowPosition() => Player + new Vector2(-PlayerFacing * 64, -44);
+
 	private Vector2 ReplaySwordFollowPosition() => Player + new Vector2(PlayerFacing * 46, -60);
 	private bool IsInSpiritRecoveryRange(Vector2 position) =>
 		position.DistanceTo(MainFire) < _balance.SwordTombRadius || Fires.Exists(fire => position.DistanceTo(fire.Position) < fire.Radius);

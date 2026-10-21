@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://ct86siikj7ngm"]
+
+[ext_resource type="Script" uid="uid://d2n3fdglhjby4" path="res://scripts/presentation/weapons/BlacksmithPresentation.cs" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://4xt70prcn8ug" path="res://assets/art/runtime/environment/props/blacksmith/blacksmith_forge.png" id="2_blacksmith"]
+
+[node name="Blacksmith" type="Node2D" unique_id=256804684]
+z_index = 1
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=219494866]
+z_index = -1
+scale = Vector2(0.24, 0.24)
+texture = ExtResource("2_blacksmith")

@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://usy8p2e1j4t2"]
+
+[ext_resource type="Script" uid="uid://cnh4u0nsvyq56" path="res://scripts/presentation/weapons/FlyingSwordPresentation.cs" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dlg1mgdq4e27s" path="res://assets/art/runtime/weapons/swords/sword_01_soulblade.png" id="2_zhaoye"]
+[ext_resource type="Texture2D" uid="uid://c8kukawx2860y" path="res://assets/art/runtime/weapons/swords/sword_02_shuanghua.png" id="3_shuanghua"]
+[ext_resource type="Texture2D" uid="uid://4tehgys58b3w" path="res://assets/art/runtime/weapons/swords/sword_03_bilan.png" id="4_bilan"]
+
+[node name="FlyingSword" type="Node2D" unique_id=1455898431]
+script = ExtResource("1_script")
+
+[node name="Zhaoye" type="Sprite2D" parent="." unique_id=1458994724]
+visible = false
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("2_zhaoye")
+offset = Vector2(291, 16)
+
+[node name="Shuanghua" type="Sprite2D" parent="." unique_id=1121769286]
+visible = false
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("3_shuanghua")
+
+[node name="Bilan" type="Sprite2D" parent="." unique_id=1373590398]
+visible = false
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("4_bilan")
+
+[node name="ZhaoyeReplay" type="Sprite2D" parent="." unique_id=1410167734]
+modulate = Color(1, 0.851, 0.569, 0.82)
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("2_zhaoye")
+offset = Vector2(291, 16)

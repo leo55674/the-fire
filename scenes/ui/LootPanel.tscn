@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/LootPanel.cs" id="1_loot_panel"]
+
+[node name="LootPanel" type="Node2D"]
+z_index = 6
+script = ExtResource("1_loot_panel")

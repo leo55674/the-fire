@@ -24,8 +24,9 @@ public sealed class BalanceValues
 	public float SwordControlTransitionDuration => _resource.Get("sword_control_transition_duration").AsSingle();
 	public float SwordReturnSpeed => _resource.Get("sword_return_speed").AsSingle();
 	public float SwordTombRadius => _resource.Get("sword_tomb_radius").AsSingle();
-	public float LightSwordDamage => _resource.Get("light_sword_damage").AsSingle();
-	public float HeavySwordDamage => _resource.Get("heavy_sword_damage").AsSingle();
+	public float SwordDamage => _resource.Get("sword_damage").AsSingle();
+	public int SwordCraftMaterialCost => _resource.Get("sword_craft_material_cost").AsInt32();
+	public float BlacksmithRange => _resource.Get("blacksmith_range").AsSingle();
 	public float SwordHitRadius => _resource.Get("sword_hit_radius").AsSingle();
 	public float SwordHitCooldown => _resource.Get("sword_hit_cooldown").AsSingle();
 	public float SwordRecordMaxDuration => _resource.Get("sword_record_max_duration").AsSingle();

@@ -7,7 +7,7 @@ public partial class ActionBindings : Node
 	public static readonly (string Action, string Label)[] Definitions =
 	{
 		("left", "向左移动"), ("right", "向右移动"), ("jump", "跳跃"),
-		("dash", "突进（闪避）"), ("sword_control", "切换御剑/归剑"), ("switch_sword", "切换剑胚"),
+		("dash", "突进（闪避）"), ("sword_control", "切换御剑/归剑"),
 		("replay_sword", "执行剑式连招"), ("combo_menu", "打开招式搭配"),
 		("axe", "飞剑攻击"), ("search", "搜刮宝箱/尸体"), ("feed", "补充剑冢灵蕴"),
 		("upgrade", "升级剑冢"), ("torch", "放置剑标"), ("campfire", "布置临时剑阵"),
@@ -70,7 +70,6 @@ public partial class ActionBindings : Node
 	{
 		_bindings["left"] = new Binding(Key.A); _bindings["right"] = new Binding(Key.D); _bindings["jump"] = new Binding(Key.W);
 		_bindings["dash"] = new Binding(Key.Shift); _bindings["sword_control"] = new Binding(MouseButton.Right);
-		_bindings["switch_sword"] = new Binding(Key.Tab);
 		_bindings["replay_sword"] = new Binding(Key.R);
 		_bindings["combo_menu"] = new Binding(Key.J);
 		_bindings["axe"] = new Binding(MouseButton.Left);

@@ -39,10 +39,12 @@ extends Resource
 @export var sword_return_speed: float = 1200
 ## 主火恢复神识的范围半径，单位为像素。
 @export var sword_tomb_radius: float = 100
-## 轻剑胚每次命中造成的伤害点数。
-@export var light_sword_damage: float = 35
-## 重剑胚每次命中造成的伤害点数。
-@export var heavy_sword_damage: float = 70
+## 飞剑每次命中造成的统一伤害点数。
+@export var sword_damage: float = 50
+## 铁匠铺打造一把飞剑所需的铸剑铁料。
+@export var sword_craft_material_cost: int = 3
+## 铁匠铺交互范围，单位为像素。
+@export var blacksmith_range: float = 120
 ## 御剑持续操控时的命中判定半径，单位为像素。
 @export var sword_hit_radius: float = 90
 ## 御剑持续操控时两次命中之间的间隔，单位为秒。
@@ -53,7 +55,7 @@ extends Resource
 @export var sword_record_min_duration: float = .5
 ## 剑式被视为有效录制所需的最短累计飞行距离，单位为像素。
 @export var sword_record_min_distance: float = 50
-## 从剑重放伤害相对当前剑胚伤害的倍率。
+## 从剑重放伤害相对飞剑基础伤害的倍率。
 @export var sword_replay_damage_multiplier: float = .5
 ## 飞剑主动攻击的命中判定半径，单位为像素。
 @export var enemy_attack_hit_radius: float = 70

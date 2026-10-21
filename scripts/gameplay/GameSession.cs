@@ -7,7 +7,10 @@ public partial class GameSession : Node
 	[Signal] public delegate void SoundCueRequestedEventHandler(string cue);
 
 	[Export] private Inventory _inventory;
+	[Export] private WeaponSystem _weaponSystem;
 	[Export] private EnemySystem _enemySystem;
+	[Export] private LootSystem _lootSystem;
+	[Export] private BlacksmithPresentation _blacksmith;
 	[Export] private Resource _balanceResource;
 	private BalanceValues _balance;
 	private GameCommands _commands;
@@ -19,10 +22,6 @@ public partial class GameSession : Node
 	private float _dashRemaining;
 	private float _dashCooldown;
 	private float _chestSpawnTimer;
-	private float _searchProgress;
-	private object _searchTarget;
-	private bool _searching;
-	private List<Inventory.Stack> _lootItems = new();
 	private Vector2 _swordControlTarget;
 	private Vector2 _swordAttackTarget;
 	private bool _swordAttackHit;
@@ -63,7 +62,6 @@ public partial class GameSession : Node
 	public Vector2 ReplaySwordVelocity { get; private set; }
 	public Vector2 CameraFocus { get; private set; }
 	public SwordMode SwordState { get; private set; } = SwordMode.Following;
-	public SwordArchetype SwordFrame { get; private set; } = SwordArchetype.Light;
 	public bool IsSwordControlled => SwordState == SwordMode.Controlled;
 	public bool IsDashing { get; private set; }
 	public bool IsSwordInFlight => SwordState != SwordMode.Following;
@@ -77,16 +75,22 @@ public partial class GameSession : Node
 	public bool WantsMouseCapture => IsSwordControlled && !ComboOpen && !InventoryOpen;
 	public float RecordedSwordDuration => HasRecordedSword ? _recordedSword[^1].Time : 0;
 	public float SwordRecordingDuration => IsSwordControlled ? MathF.Min(_recordingTime, _balance.SwordRecordMaxDuration) : 0;
-	public float SwordDamage => SwordFrame == SwordArchetype.Light ? _balance.LightSwordDamage : _balance.HeavySwordDamage;
+	public float SwordDamage => _balance.SwordDamage;
+	public int SwordCount => _weaponSystem.EquippedCount;
+	public string SwordRoster => _weaponSystem.EquippedNames;
+	public IReadOnlyList<Vector2> CompanionSwordPositions => _weaponSystem.CompanionSwordPositions;
+	public Vector2 BlacksmithPosition => _blacksmith.WorldPosition(GroundY);
+	public int SwordIron => _inventory?.Count("sword_iron") ?? 0;
 	public BalanceValues Balance => _balance;
 	public int PlayerFacing { get; private set; } = 1;
 	public bool PlayerMoving { get; private set; }
 	public int Wood => _inventory?.Count("wood") ?? 0;
 	public Inventory Bag => _inventory;
-	public IReadOnlyList<Inventory.Stack> LootItems => _lootItems;
-	public bool LootOpen { get; private set; }
-	public float SearchProgress => Mathf.Clamp(_searchProgress / _balance.SearchDuration, 0, 1);
-	public bool IsSearching => _searching;
+	public IReadOnlyList<Inventory.Stack> LootItems => _lootSystem?.Items ?? Array.Empty<Inventory.Stack>();
+	public LootSystem LootSystem => _lootSystem;
+	public bool LootOpen => _lootSystem?.IsOpen ?? false;
+	public float SearchProgress => _lootSystem?.Progress ?? 0;
+	public bool IsSearching => _lootSystem?.IsSearching ?? false;
 	public string SearchPrompt { get; private set; } = "";
 	public int FireLevel { get; private set; } = 1;
 	public bool NameFound { get; private set; } = true;
@@ -96,7 +100,7 @@ public partial class GameSession : Node
 
 	public override void _Ready()
 	{
-		if (_enemySystem == null) throw new InvalidOperationException("GameSession requires an EnemySystem child.");
+		if (_enemySystem == null || _weaponSystem == null || _lootSystem == null || _blacksmith == null) throw new InvalidOperationException("GameSession requires EnemySystem, WeaponSystem, LootSystem and Blacksmith references.");
 		_enemySystem.FireDamaged += damage => { Fuel = MathF.Max(0, Fuel - damage); Message = "啮阵兽正在侵蚀剑冢！"; };
 		_enemySystem.WoodStolen += () => Message = "盗铭伥偷走了一块剑骸。";
 		_enemySystem.PlayerHit += DamagePlayer;
@@ -116,6 +120,8 @@ public partial class GameSession : Node
 		Player = MainFire;
 		PlayerMoving = false;
 		SwordPosition = SwordFollowPosition();
+		_weaponSystem.ResetEquipment();
+		_weaponSystem.UpdateFollowers(Player, PlayerFacing, 1);
 		ReplaySwordPosition = ReplaySwordFollowPosition();
 		_recordingSamples.Clear();
 		_recordedSword.Clear();
@@ -130,7 +136,6 @@ public partial class GameSession : Node
 		for (var i = -10; i <= 10; i++)
 			if (i != 0) Trees.Add(new TreeState(i * 155 + _random.Next(-35, 36), GroundY));
 		Chests.Clear();
-		_lootItems = new List<Inventory.Stack>();
 		SpawnChestNearPlayer();
 		SpawnChestNearPlayer();
 	}
@@ -142,15 +147,7 @@ public partial class GameSession : Node
 		if (_commands.Pressed("inventory")) ToggleInventory();
 		if (InventoryOpen)
 		{
-			if (_commands.Pressed("switch_sword"))
-			{
-				if (_inventory.Count("light_sword") + _inventory.Count("heavy_sword") == 2)
-				{
-					SwordFrame = SwordFrame == SwordArchetype.Light ? SwordArchetype.Heavy : SwordArchetype.Light;
-					Message = SwordFrame == SwordArchetype.Light ? "已装备轻剑胚。" : "已装备重剑胚。";
-				}
-				else Message = "尚未获得另一种剑胚。";
-			}
+			_lootSystem.Tick(dt);
 			if (_commands.Pressed("feed"))
 			{
 				if (_inventory.Remove("healing_potion", 1))
@@ -168,13 +165,13 @@ public partial class GameSession : Node
 		if (ComboOpen) return;
 		var previousPlayer = Player;
 		UpdatePlayer(dt);
-		var moved = Player.DistanceTo(previousPlayer) > .1f;
 		PlayerMoving = MathF.Abs(Player.X - previousPlayer.X) > .1f || IsDashing;
 		UpdateSword(dt);
+		_weaponSystem.UpdateFollowers(Player, PlayerFacing, dt);
 		UpdateFire(dt);
 		_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory);
 		UpdateTemporaryFires(dt);
-		HandleInteractions(dt, moved);
+		HandleInteractions();
 		HandleCombat();
 		var cameraTarget = Player.Lerp(SwordPosition, Mathf.SmoothStep(0, 1, _swordControlBlend));
 		CameraFocus = CameraFocus.Lerp(cameraTarget, 1 - MathF.Exp(-8 * dt));
@@ -194,26 +191,13 @@ public partial class GameSession : Node
 	{
 		if (LootOpen)
 		{
-			LootOpen = false;
-			_lootItems = new List<Inventory.Stack>();
+			_lootSystem.Close();
 			InventoryOpen = false;
 		}
 		else InventoryOpen = !InventoryOpen;
 	}
 
-	public bool TransferLoot(int from, int to, int amount = int.MaxValue) => _inventory.TransferFrom(_lootItems, from, to, amount) > 0;
-
-	public void TakeAllLoot()
-	{
-		for (var i = 0; i < _lootItems.Count; i++)
-		{
-			while (_lootItems[i] != null)
-			{
-				var target = _inventory.FirstTransferSlot(_lootItems[i]);
-				if (target < 0 || _inventory.TransferFrom(_lootItems, i, target) == 0) break;
-			}
-		}
-	}
+	public bool TransferLoot(int from, int to, int amount = int.MaxValue) => _lootSystem.TransferTo(_inventory, from, to, amount);
 
 	public void Start() => Message = "守住剑冢，右键切换御剑，Shift 突进闪避。";
 
@@ -223,6 +207,7 @@ public partial class GameSession : Node
 		GroundY = groundY;
 		Player += offset;
 		SwordPosition += offset;
+		_weaponSystem.UpdateFollowers(Player, PlayerFacing, 1);
 		ReplaySwordPosition += offset;
 		_recordingOrigin += offset;
 		_replayOrigin += offset;

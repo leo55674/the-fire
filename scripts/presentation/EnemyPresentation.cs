@@ -28,7 +28,7 @@ public partial class EnemyPresentation : Node2D
 			EnemySystem.EnemyVisualState.Dead => _deadTexture,
 			_ => _normalTexture
 		};
-		_sprite.FlipH = enemy.Position.X > session.Player.X;
+		if (!enemy.IsDying) _sprite.FlipH = enemy.Position.X > session.Player.X;
 		_damageLabel.Visible = enemy.DamageFeedbackTime > 0;
 		if (!_damageLabel.Visible) return;
 		var progress = 1 - enemy.DamageFeedbackTime / session.Balance.EnemyDamageFeedbackDuration;
