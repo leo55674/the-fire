@@ -23,6 +23,10 @@ public partial class EnemySystem : Node
 		public float DeathTime = -1;
 		public float DeathAge;
 		public bool StoleWood;
+		public float WanderCenter;
+		public float WanderTime;
+		public int WanderDirection;
+		public bool WasActive;
 		public bool Searched;
 		public List<Inventory.Stack> Loot = new();
 		public bool IsDying { get; private set; }
@@ -33,6 +37,7 @@ public partial class EnemySystem : Node
 		{
 			Kind = kind;
 			Position = new Vector2(x, groundY);
+			WanderCenter = x;
 			Health = health;
 			DeathAnimationDuration = deathAnimationDuration;
 			DeathTime = unclaimedCorpseLifetime;
@@ -70,23 +75,28 @@ public partial class EnemySystem : Node
 		_spawnTimer = _balance.EnemyInitialSpawnDelay;
 	}
 
-	public void AdvanceSpawning(float dt, int fireLevel, float dreamAsh, float groundY)
+	public void AdvanceSpawning(float dt, int fireLevel, float dreamAsh, float groundY, float playerX, bool isNight)
 	{
 		_spawnTimer -= dt;
 		if (_spawnTimer > 0) return;
-		Spawn(groundY);
+		Spawn(groundY, playerX, isNight);
 		_spawnTimer = MathF.Max(_balance.EnemySpawnMinInterval,
 			_balance.EnemySpawnBaseInterval - fireLevel * _balance.EnemySpawnFireLevelFactor - dreamAsh * _balance.EnemySpawnDreamAshFactor);
 	}
 
-	public void Spawn(float groundY)
+	public void Spawn(float groundY, float playerX, bool isNight)
 	{
 		var side = _random.Next(2) == 0 ? -1 : 1;
-		_enemies.Add(new EnemyState((EnemyKind)_random.Next(0, 3), side * _random.Next(650, 1050), groundY,
+		var anchor = isNight ? 0 : playerX;
+		var x = anchor + side * _random.Next(650, 1050);
+		if (MathF.Abs(x) <= _balance.VillageRadius) x = side * (_balance.VillageRadius + 100);
+		x = Mathf.Clamp(x, -_balance.WorldHalfWidth + 40, _balance.WorldHalfWidth - 40);
+		if (MathF.Abs(x) <= _balance.VillageRadius) return;
+		_enemies.Add(new EnemyState((EnemyKind)_random.Next(0, 3), x, groundY,
 			_balance.EnemyHealth, _balance.EnemyDeathAnimationDuration, _balance.EnemyUnclaimedCorpseLifetime));
 	}
 
-	public void Tick(float dt, Vector2 player, Vector2 mainFire, float groundY, Inventory inventory)
+	public void Tick(float dt, Vector2 player, Vector2 mainFire, float groundY, Inventory inventory, bool isNight)
 	{
 		foreach (var enemy in _enemies)
 		{
@@ -101,13 +111,23 @@ public partial class EnemySystem : Node
 			}
 			enemy.HurtTime = MathF.Max(0, enemy.HurtTime - dt);
 			enemy.AttackDelay = MathF.Max(0, enemy.AttackDelay - dt);
+			var nearPlayer = enemy.Position.DistanceTo(player) <= _balance.EnemyAggroRange;
+			var active = nearPlayer || enemy.StoleWood || isNight && enemy.Kind == EnemyKind.Extinguisher;
+			if (!active)
+			{
+				if (enemy.WasActive) { enemy.WanderCenter = enemy.Position.X; enemy.WanderTime = 0; }
+				enemy.WasActive = false;
+				Wander(enemy, dt);
+				continue;
+			}
+			enemy.WasActive = true;
 			switch (enemy.Kind)
 			{
 				case EnemyKind.Hunter:
 					if (HunterBehavior.Tick(enemy, dt, player, _balance)) EmitSignal(SignalName.PlayerHit);
 					break;
 				case EnemyKind.Extinguisher:
-					if (ExtinguisherBehavior.Tick(enemy, dt, player, mainFire, _balance))
+					if (ExtinguisherBehavior.Tick(enemy, dt, player, mainFire, _balance, isNight))
 						EmitSignal(SignalName.FireDamaged, _balance.ExtinguisherFuelDamage);
 					break;
 				case EnemyKind.Thief:
@@ -115,7 +135,30 @@ public partial class EnemySystem : Node
 					break;
 			}
 		}
-		_enemies.RemoveAll(enemy => enemy.IsDying ? enemy.DeathTime <= 0 : MathF.Abs(enemy.Position.X) > _balance.EnemyDespawnDistance);
+		_enemies.RemoveAll(enemy => enemy.IsDying ? enemy.DeathTime <= 0 : MathF.Abs(enemy.Position.X) > _balance.WorldHalfWidth);
+	}
+
+	private void Wander(EnemyState enemy, float dt)
+	{
+		var side = enemy.Position.X < 0 ? -1 : 1;
+		if (MathF.Abs(enemy.Position.X) < _balance.VillageRadius)
+		{
+			enemy.Position += new Vector2(side * _balance.EnemyWanderSpeed * dt, 0);
+			return;
+		}
+		if ((enemy.WanderTime -= dt) <= 0)
+		{
+			enemy.WanderTime = _random.Next(1, 4);
+			enemy.WanderDirection = _random.Next(-1, 2);
+		}
+		var minX = MathF.Max(-_balance.WorldHalfWidth, enemy.WanderCenter - _balance.EnemyWanderRadius);
+		var maxX = MathF.Min(_balance.WorldHalfWidth, enemy.WanderCenter + _balance.EnemyWanderRadius);
+		if (side < 0) maxX = MathF.Min(maxX, -_balance.VillageRadius);
+		else minX = MathF.Max(minX, _balance.VillageRadius);
+		if (minX > maxX) { enemy.WanderCenter = enemy.Position.X; return; }
+		var nextX = Mathf.Clamp(enemy.Position.X + enemy.WanderDirection * _balance.EnemyWanderSpeed * dt, minX, maxX);
+		if (nextX == minX || nextX == maxX) enemy.WanderTime = 0;
+		enemy.Position = new Vector2(nextX, enemy.Position.Y);
 	}
 
 	public EnemyState FindLivingNear(Vector2 position, float radius) =>

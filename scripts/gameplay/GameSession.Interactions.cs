@@ -29,7 +29,7 @@ public partial class GameSession : Node
 		{
 			_inventory.Remove("wood", FireLevel * _balance.FireUpgradeWoodPerLevel); FireLevel++; Fuel = _balance.MaxFuel;
 			Message = FireLevel == _balance.MaxFireLevel ? "剑冢终阶开启，最终剑潮开始。" : "剑冢阵眼升阶。";
-			if (FireLevel == _balance.MaxFireLevel) { FinalNight = _balance.FinalNightDuration; for (var i = 0; i < _balance.FinalNightInitialEnemyCount; i++) _enemySystem.Spawn(GroundY); }
+			if (FireLevel == _balance.MaxFireLevel) { FinalNight = _balance.FinalNightDuration; for (var i = 0; i < _balance.FinalNightInitialEnemyCount; i++) _enemySystem.Spawn(GroundY, Player.X, true); }
 		}
 		if (NameFound && Player.DistanceTo(new Vector2(430, GroundY)) < 60)
 		{
@@ -85,8 +85,8 @@ public partial class GameSession : Node
 
 	private void Reset()
 	{
-		Fuel = _balance.StartingFuel; Ember = _balance.StartingEmber; Health = _balance.StartingHealth; _inventory.Reset(); FireLevel = _balance.StartingFireLevel; DreamAsh = 0; FinalNight = 0; NameFound = true;
-		_weaponSystem.ResetEquipment();
+		Fuel = _balance.StartingFuel; Ember = _balance.StartingEmber; Health = _balance.StartingHealth; _inventory.Reset(); FireLevel = _balance.StartingFireLevel; DreamAsh = 0; FinalNight = 0; NameFound = true; IsNight = false; PhaseRemaining = _balance.DayDuration;
+		_weaponSystem.ResetEquipment(PlayerFacing);
 		_lootSystem.Close(); InventoryOpen = false;
 		Player = MainFire; _enemySystem.Reset(); Fires.Clear();
 		_dashRemaining = 0; _dashCooldown = 0; IsDashing = false;

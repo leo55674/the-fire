@@ -11,6 +11,7 @@ public partial class LootPanel : Node2D
 	private bool _splitMode;
 	private int _splitSource = -1;
 	private bool _wasOpen;
+	private bool _equipFailed;
 	private Texture2D _woodIcon;
 	private Texture2D _ironIcon;
 	private Texture2D _potionIcon;
@@ -25,6 +26,7 @@ public partial class LootPanel : Node2D
 	public override void _Process(double delta)
 	{
 		var open = Session?.InventoryOpen == true;
+		if (open && !_wasOpen) _equipFailed = false;
 		if (open || open != _wasOpen) QueueRedraw();
 		_wasOpen = open;
 	}
@@ -38,7 +40,7 @@ public partial class LootPanel : Node2D
 		var bag = Panel(size, false);
 		DrawGrid(bag, Session.Bag.Slots, false);
 		if (split) DrawGrid(Panel(size, true), Session.LootSystem.Items, true);
-		else DrawString(ThemeDB.FallbackFont, bag.Position + new Vector2(26, bag.Size.Y - 18), $"E 使用疗伤丹    飞剑 {Session.SwordCount}/3    铸剑铁料 {Session.SwordIron}    I / Esc 关闭", HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
+		else DrawString(ThemeDB.FallbackFont, bag.Position + new Vector2(26, bag.Size.Y - 18), "E 使用疗伤丹    I / Esc 关闭", HorizontalAlignment.Left, -1, 14, new Color("ffe0a0"));
 		if (_dragIndex >= 0)
 		{
 			var stack = _dragFromLoot ? Session.LootSystem.Items[_dragIndex] : Session.Bag.Slots[_dragIndex];
@@ -48,25 +50,27 @@ public partial class LootPanel : Node2D
 
 	private Rect2 Panel(Vector2 size, bool loot)
 	{
-		var panelSize = new Vector2(size.X * (Session.LootOpen ? .43f : .56f), size.Y * .68f);
+		var panelSize = new Vector2(size.X * (Session.LootOpen ? .43f : .56f), size.Y * .78f);
 		var x = Session.LootOpen ? size.X * (loot ? .04f : .53f) : (size.X - panelSize.X) / 2;
 		return new Rect2(new Vector2(x, (size.Y - panelSize.Y) / 2), panelSize);
 	}
 
-	private Rect2 CellRect(Rect2 panel, int index)
+	private Rect2 CellRect(Rect2 panel, int index, bool loot)
 	{
-		var area = new Vector2(panel.Size.X - 40, panel.Size.Y - 195);
+		var columns = loot ? 6 : Session.Bag.Width;
+		var rows = loot ? 4 : Session.Bag.Height;
+		var area = new Vector2(panel.Size.X - 40, panel.Size.Y - (loot ? 195 : 275));
 		const float gap = 7;
-		var cell = Mathf.Floor(Mathf.Min((area.X - gap * 5) / 6, (area.Y - gap * 3) / 4));
-		var used = new Vector2(cell * 6 + gap * 5, cell * 4 + gap * 3);
-		var origin = panel.Position + new Vector2((panel.Size.X - used.X) / 2, 56 + (area.Y - used.Y) / 2);
-		return new Rect2(origin + new Vector2(index % 6 * (cell + gap), index / 6 * (cell + gap)), new Vector2(cell, cell));
+		var cell = Mathf.Floor(Mathf.Min((area.X - gap * (columns - 1)) / columns, (area.Y - gap * (rows - 1)) / rows));
+		var used = new Vector2(cell * columns + gap * (columns - 1), cell * rows + gap * (rows - 1));
+		var origin = panel.Position + new Vector2((panel.Size.X - used.X) / 2, (loot ? 56 : 136) + (area.Y - used.Y) / 2);
+		return new Rect2(origin + new Vector2(index % columns * (cell + gap), index / columns * (cell + gap)), new Vector2(cell, cell));
 	}
 
-	private Rect2 ItemRect(Rect2 panel, int slot, Inventory.Stack stack)
+	private Rect2 ItemRect(Rect2 panel, int slot, Inventory.Stack stack, bool loot)
 	{
-		var first = CellRect(panel, slot);
-		var last = CellRect(panel, slot + (stack.Height - 1) * 6 + stack.Width - 1);
+		var first = CellRect(panel, slot, loot);
+		var last = CellRect(panel, slot + (stack.Height - 1) * (loot ? 6 : Session.Bag.Width) + stack.Width - 1, loot);
 		return new Rect2(first.Position, last.End - first.Position);
 	}
 
@@ -74,10 +78,16 @@ public partial class LootPanel : Node2D
 	{
 		DrawRect(panel, new Color("0c121c", .97f)); DrawRect(panel, new Color("c69b5c"), false, 2);
 		DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(20, 36), loot ? $"搜刮物资 · {Session.LootSystem.TargetName}" : "行囊", HorizontalAlignment.Left, -1, 24, new Color("ffe0a0"));
-		if (!loot) DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(panel.Size.X - 170, 34), $"物品 {Session.Bag.Items.Count}/{Session.Bag.Capacity}", HorizontalAlignment.Right, 150, 14, new Color("b8c2cc"));
-		for (var i = 0; i < Session.Bag.Capacity; i++)
+		if (!loot)
 		{
-			var rect = CellRect(panel, i);
+			DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(panel.Size.X - 180, 34), $"{Session.Bag.Width}×{Session.Bag.Height} 格", HorizontalAlignment.Right, 160, 14, new Color("b8c2cc"));
+			DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(20, 65), $"装备 · 武器：{Session.SwordRoster}", HorizontalAlignment.Left, panel.Size.X - 40, 14, new Color("d0d8df"));
+			DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(20, 94), $"背包：{ItemName(Session.Bag.EquippedBackpack)}", HorizontalAlignment.Left, panel.Size.X - 40, 14, new Color("ffe0a0"));
+			DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(20, 116), _equipFailed ? "空间不足，无法换装" : "双击背包物品可换装", HorizontalAlignment.Left, panel.Size.X - 40, 12, _equipFailed ? new Color("ff9e91") : new Color("9daab5"));
+		}
+		for (var i = 0; i < (loot ? 24 : Session.Bag.Capacity); i++)
+		{
+			var rect = CellRect(panel, i, loot);
 			var cellHovered = rect.HasPoint(GetViewport().GetMousePosition());
 			DrawRect(rect, cellHovered ? new Color("5d4930") : new Color("111923"));
 			DrawRect(rect, new Color("46535e"), false, 1);
@@ -88,7 +98,7 @@ public partial class LootPanel : Node2D
 			{
 				var stack = slots[i];
 				if (stack == null || stack.LootSlot < 0) continue;
-				var rect = ItemRect(panel, stack.LootSlot, stack);
+				var rect = ItemRect(panel, stack.LootSlot, stack, true);
 				if (stack.Searched) DrawStack(rect.Position, rect.Size, stack, false);
 				else { DrawRect(rect, new Color("17222e")); DrawRect(rect, new Color("46535e"), false, 1); }
 				if (Session.LootSystem.IsSearching && i == Session.LootSystem.SearchedCount) DrawSearchSpinner(rect);
@@ -101,7 +111,7 @@ public partial class LootPanel : Node2D
 			for (var i = 0; i < slots.Count; i++)
 				if (slots[i] != null && Session.Bag.SlotFor(slots[i]) == i)
 				{
-					var rect = ItemRect(panel, i, slots[i]);
+					var rect = ItemRect(panel, i, slots[i], false);
 					DrawStack(rect.Position, rect.Size, slots[i], false);
 				}
 		}
@@ -132,7 +142,8 @@ public partial class LootPanel : Node2D
 			var iconSize = icon.GetSize() * scale;
 			DrawTextureRect(icon, new Rect2(bounds.GetCenter() - iconSize / 2, iconSize), false);
 		}
-		DrawString(ThemeDB.FallbackFont, rect.End - new Vector2(20, 4), stack.Count.ToString(), HorizontalAlignment.Right, 17, 13, Colors.White);
+		if (icon == null) DrawString(ThemeDB.FallbackFont, rect.Position + new Vector2(4, rect.Size.Y / 2), ItemName(stack.Id), HorizontalAlignment.Center, rect.Size.X - 8, 12, Colors.White);
+		if (stack.Count > 1) DrawString(ThemeDB.FallbackFont, rect.End - new Vector2(20, 4), stack.Count.ToString(), HorizontalAlignment.Right, 17, 13, Colors.White);
 	}
 
 	private void DrawSearchSpinner(Rect2 item)
@@ -161,12 +172,14 @@ public partial class LootPanel : Node2D
 		DrawString(ThemeDB.FallbackFont, rect.Position + new Vector2(0, 22), text, HorizontalAlignment.Center, rect.Size.X, 14, Colors.White);
 	}
 
-	private string ItemName(string id) => id switch { "wood" => "剑骸", "sword_iron" => "铸剑铁料", "healing_potion" => "疗伤丹", _ => id };
+	private string ItemName(string id) => id switch { "wood" => "剑骸", "sword_iron" => "铸剑铁料", "healing_potion" => "疗伤丹", "starter_backpack" => "初始背包", "large_backpack" => "扩容背包", _ => id };
 	private string ItemDescription(string id) => id switch
 	{
 		"wood" => "用于补充灵蕴、升阶及布置剑阵。",
 		"sword_iron" => "铁匠铺打造飞剑的材料，占用 2×1 格。",
 		"healing_potion" => "使用后恢复血量。",
+		"starter_backpack" => "装备后提供 5×5 格；空间不足时无法换装。",
+		"large_backpack" => "装备后提供 6×5 格；双击可换装。",
 		_ => ""
 	};
 
@@ -208,6 +221,11 @@ public partial class LootPanel : Node2D
 		}
 		if (index < 0) return;
 		if (inLoot && !slots[index].Searched) return;
+		if (!inLoot && (e.DoubleClick || (_lastClickIndex == index && Time.GetTicksMsec() / 1000f - _lastClickTime < .35f)) && slots[index].Id is "starter_backpack" or "large_backpack")
+		{
+			_equipFailed = !Session.Bag.EquipBackpack(index);
+			_lastClickIndex = -1; _dragIndex = -1; QueueRedraw(); return;
+		}
 		if (inLoot && (e.DoubleClick || (_lastClickIndex == index && Time.GetTicksMsec() / 1000f - _lastClickTime < .35f)))
 		{
 			Session.TransferLoot(index, Session.Bag.FirstTransferSlot(slots[index]));
@@ -222,14 +240,14 @@ public partial class LootPanel : Node2D
 		for (var i = 0; i < slots.Count; i++)
 		{
 			var stack = slots[i]; if (stack == null) continue;
-			if (loot ? stack.LootSlot >= 0 && ItemRect(panel, stack.LootSlot, stack).HasPoint(point) : Session.Bag.SlotFor(stack) == i && ItemRect(panel, i, stack).HasPoint(point)) return i;
+			if (loot ? stack.LootSlot >= 0 && ItemRect(panel, stack.LootSlot, stack, true).HasPoint(point) : Session.Bag.SlotFor(stack) == i && ItemRect(panel, i, stack, false).HasPoint(point)) return i;
 		}
 		return -1;
 	}
 
 	private int FindCell(Rect2 panel, Vector2 point)
 	{
-		for (var i = 0; i < Session.Bag.Capacity; i++) if (CellRect(panel, i).HasPoint(point)) return i;
+		for (var i = 0; i < Session.Bag.Capacity; i++) if (CellRect(panel, i, false).HasPoint(point)) return i;
 		return -1;
 	}
 }

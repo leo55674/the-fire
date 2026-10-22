@@ -51,6 +51,13 @@ public sealed class BalanceValues
 	public float EmberControlBaseDrain => _resource.Get("ember_control_base_drain").AsSingle();
 	public float EmberControlDistanceDrain => _resource.Get("ember_control_distance_drain").AsSingle();
 	public float EnemyHealth => _resource.Get("enemy_health").AsSingle();
+	public float WorldHalfWidth => _resource.Get("world_half_width").AsSingle();
+	public float VillageRadius => _resource.Get("village_radius").AsSingle();
+	public float EnemyAggroRange => _resource.Get("enemy_aggro_range").AsSingle();
+	public float EnemyWanderSpeed => _resource.Get("enemy_wander_speed").AsSingle();
+	public float EnemyWanderRadius => _resource.Get("enemy_wander_radius").AsSingle();
+	public float DayDuration => _resource.Get("day_duration").AsSingle();
+	public float NightDuration => _resource.Get("night_duration").AsSingle();
 	public float EnemyInitialSpawnDelay => _resource.Get("enemy_initial_spawn_delay").AsSingle();
 	public float EnemySpawnBaseInterval => _resource.Get("enemy_spawn_base_interval").AsSingle();
 	public float EnemySpawnFireLevelFactor => _resource.Get("enemy_spawn_fire_level_factor").AsSingle();
@@ -61,13 +68,11 @@ public sealed class BalanceValues
 	public float HunterAttackRange => _resource.Get("hunter_attack_range").AsSingle();
 	public float HunterAttackCooldown => _resource.Get("hunter_attack_cooldown").AsSingle();
 	public float PlayerHurtDuration => _resource.Get("player_hurt_duration").AsSingle();
-	public float ExtinguisherTargetRange => _resource.Get("extinguisher_target_range").AsSingle();
 	public float ExtinguisherAttackRange => _resource.Get("extinguisher_attack_range").AsSingle();
 	public float ExtinguisherFuelDamage => _resource.Get("extinguisher_fuel_damage").AsSingle();
 	public float ExtinguisherAttackCooldown => _resource.Get("extinguisher_attack_cooldown").AsSingle();
 	public float ThiefAttackRange => _resource.Get("thief_attack_range").AsSingle();
 	public float ThiefAttackCooldown => _resource.Get("thief_attack_cooldown").AsSingle();
-	public float EnemyDespawnDistance => _resource.Get("enemy_despawn_distance").AsSingle();
 	public float EnemyDamageFeedbackDuration => _resource.Get("enemy_damage_feedback_duration").AsSingle();
 	public float EnemyHurtDuration => _resource.Get("enemy_hurt_duration").AsSingle();
 	public float EnemyDeathAnimationDuration => _resource.Get("enemy_death_animation_duration").AsSingle();

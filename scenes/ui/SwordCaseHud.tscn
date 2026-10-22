@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://bveku1nttb5ym"]
+
+[ext_resource type="Script" uid="uid://d0ebgxigdwq84" path="res://scripts/ui/SwordCaseHud.cs" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bdsikhmlr0far" path="res://assets/art/runtime/ui/sword_case/ui_sword_case.png" id="2_case"]
+[ext_resource type="Texture2D" uid="uid://fv5jcumawioh" path="res://assets/art/runtime/ui/sword_case/ui_sword_zhaoye.png" id="3_zhaoye"]
+[ext_resource type="Texture2D" uid="uid://mor8iwnhx7lu" path="res://assets/art/runtime/ui/sword_case/ui_sword_shuanghua.png" id="4_shuanghua"]
+[ext_resource type="Texture2D" uid="uid://bto7kbt2vr7hd" path="res://assets/art/runtime/ui/sword_case/ui_sword_bilan.png" id="5_bilan"]
+
+[node name="SwordCaseHud" type="Control" unique_id=1478988720 node_paths=PackedStringArray("_mainSword", "_leftSword", "_rightSword")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+_mainSword = NodePath("SwordLayout/MainSword")
+_leftSword = NodePath("SwordLayout/LeftSword")
+_rightSword = NodePath("SwordLayout/RightSword")
+_zhaoye = ExtResource("3_zhaoye")
+_shuanghua = ExtResource("4_shuanghua")
+_bilan = ExtResource("5_bilan")
+
+[node name="SwordLayout" type="Control" parent="." unique_id=1450580615]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -165.0
+offset_right = 60.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="LeftSword" type="TextureRect" parent="SwordLayout" unique_id=132975310]
+layout_mode = 0
+offset_left = 37.0
+offset_top = 47.000008
+offset_right = 72.0
+offset_bottom = 124.0
+rotation = -0.441111
+pivot_offset = Vector2(17.5, 77)
+mouse_filter = 2
+texture = ExtResource("4_shuanghua")
+expand_mode = 1
+
+[node name="RightSword" type="TextureRect" parent="SwordLayout" unique_id=1759092324]
+layout_mode = 0
+offset_left = 43.0
+offset_top = 43.000004
+offset_right = 78.0
+offset_bottom = 120.0
+rotation = 0.3589828
+pivot_offset = Vector2(17.5, 77)
+mouse_filter = 2
+texture = ExtResource("5_bilan")
+expand_mode = 1
+
+[node name="MainSword" type="TextureRect" parent="SwordLayout" unique_id=1194094602]
+layout_mode = 0
+offset_left = 38.0
+offset_top = 17.0
+offset_right = 73.0
+offset_bottom = 94.0
+pivot_offset = Vector2(17.5, 77)
+mouse_filter = 2
+texture = ExtResource("3_zhaoye")
+expand_mode = 1
+
+[node name="SwordCaseFront" type="TextureRect" parent="SwordLayout" unique_id=681335850]
+layout_mode = 0
+offset_top = 45.0
+offset_right = 120.0
+offset_bottom = 165.0
+mouse_filter = 2
+texture = ExtResource("2_case")
+expand_mode = 1

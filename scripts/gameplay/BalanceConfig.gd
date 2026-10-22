@@ -93,6 +93,20 @@ extends Resource
 ## 御剑距离消耗系数；距离每增加此像素数，每秒额外消耗 1 点神识。
 @export var ember_control_distance_drain: float = 85
 @export_group("敌人与遭遇")
+## 地图中心到左右边界的距离，单位为像素。
+@export var world_half_width: float = 3600
+## 村庄从剑冢向左右延伸的距离，单位为像素。
+@export var village_radius: float = 550
+## 主角进入此距离后，附近怪物才开始寻敌，单位为像素。
+@export var enemy_aggro_range: float = 360
+## 怪物未发现目标时的游走速度，单位为像素/秒。
+@export var enemy_wander_speed: float = 40
+## 怪物未发现目标时围绕当前位置游走的最大距离，单位为像素。
+@export var enemy_wander_radius: float = 180
+## 白天持续时间，单位为秒。
+@export var day_duration: float = 90
+## 夜晚持续时间，单位为秒。
+@export var night_duration: float = 60
 ## 普通敌人的生命值。
 @export var enemy_health: float = 100
 ## 远征开始后首次生成敌人的等待时间，单位为秒。
@@ -115,8 +129,6 @@ extends Resource
 @export var hunter_attack_cooldown: float = 1.3
 ## 忆身受击后的无敌时长，单位为秒。
 @export var player_hurt_duration: float = 1
-## 忆身离主火超过此距离时，啮阵兽会转向主火，单位为像素。
-@export var extinguisher_target_range: float = 190
 ## 啮阵兽靠近主火到此距离时开始侵蚀，单位为像素。
 @export var extinguisher_attack_range: float = 38
 ## 啮阵兽每次攻击扣除的灵蕴值。
@@ -127,8 +139,6 @@ extends Resource
 @export var thief_attack_range: float = 35
 ## 盗铭伥两次偷取尝试之间的间隔，单位为秒。
 @export var thief_attack_cooldown: float = 1.5
-## 敌人离开此水平距离后会被移除，单位为像素。
-@export var enemy_despawn_distance: float = 1750
 ## 敌人受击数字的显示时长，单位为秒。
 @export var enemy_damage_feedback_duration: float = .55
 ## 敌人受伤动画时长，单位为秒。

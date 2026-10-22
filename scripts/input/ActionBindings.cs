@@ -16,6 +16,7 @@ public partial class ActionBindings : Node
 
 	private readonly Dictionary<string, Binding> _bindings = new();
 	private readonly HashSet<string> _pressedActions = new();
+	private int _swordCycleSteps;
 
 	public override void _Ready()
 	{
@@ -28,7 +29,11 @@ public partial class ActionBindings : Node
 		if (inputEvent is InputEventKey key && key.Pressed && !key.Echo)
 			AddPressedAction(binding => binding.Key == key.Keycode);
 		else if (inputEvent is InputEventMouseButton mouse && mouse.Pressed)
-			AddPressedAction(binding => binding.Mouse == mouse.ButtonIndex);
+		{
+			if (mouse.ButtonIndex == MouseButton.WheelUp) _swordCycleSteps--;
+			else if (mouse.ButtonIndex == MouseButton.WheelDown) _swordCycleSteps++;
+			else AddPressedAction(binding => binding.Mouse == mouse.ButtonIndex);
+		}
 	}
 
 	public bool Held(string action)
@@ -38,15 +43,16 @@ public partial class ActionBindings : Node
 			|| binding.Mouse is MouseButton mouse && Input.IsMouseButtonPressed(mouse);
 	}
 	public bool Pressed(string action) => _pressedActions.Remove(action);
-	public void ClearPressed() => _pressedActions.Clear();
+	public void ClearPressed() { _pressedActions.Clear(); _swordCycleSteps = 0; }
 	public string LabelFor(string action) => _bindings[action].Label;
 	public GameCommands ConsumeGameplay(Vector2 attackTarget)
 	{
 		var held = new HashSet<string>();
 		foreach (var (action, _) in Definitions)
 			if (Held(action)) held.Add(action);
-		var commands = new GameCommands(held, new HashSet<string>(_pressedActions), attackTarget, LabelFor("search"));
+		var commands = new GameCommands(held, new HashSet<string>(_pressedActions), attackTarget, LabelFor("search"), _swordCycleSteps);
 		_pressedActions.Clear();
+		_swordCycleSteps = 0;
 		return commands;
 	}
 
@@ -60,6 +66,7 @@ public partial class ActionBindings : Node
 
 	public void Rebind(string action, MouseButton mouse)
 	{
+		if (mouse is MouseButton.WheelUp or MouseButton.WheelDown) return;
 		foreach (var pair in _bindings)
 			if (pair.Key != action && pair.Value.Mouse == mouse) pair.Value.Mouse = null;
 		_bindings[action] = new Binding(mouse);
@@ -88,7 +95,7 @@ public partial class ActionBindings : Node
 			var keyName = config.GetValue("controls", action + "_key", config.GetValue("controls", legacyAction + "_key", "")).AsString();
 			var mouseName = config.GetValue("controls", action + "_mouse", config.GetValue("controls", legacyAction + "_mouse", "")).AsString();
 			if (Enum.TryParse<Key>(keyName, out var key)) _bindings[action] = new Binding(key);
-			if (Enum.TryParse<MouseButton>(mouseName, out var mouse)) _bindings[action] = new Binding(mouse);
+			if (Enum.TryParse<MouseButton>(mouseName, out var mouse) && mouse is not (MouseButton.WheelUp or MouseButton.WheelDown)) _bindings[action] = new Binding(mouse);
 		}
 		if (_bindings["sword_control"].Key == Key.Shift)
 		{
@@ -131,13 +138,15 @@ public readonly struct GameCommands
 	private readonly HashSet<string> _pressed;
 	public Vector2 AttackTarget { get; }
 	public string SearchLabel { get; }
+	public int SwordCycleSteps { get; }
 
-	public GameCommands(HashSet<string> held, HashSet<string> pressed, Vector2 attackTarget, string searchLabel)
+	public GameCommands(HashSet<string> held, HashSet<string> pressed, Vector2 attackTarget, string searchLabel, int swordCycleSteps)
 	{
 		_held = held;
 		_pressed = pressed;
 		AttackTarget = attackTarget;
 		SearchLabel = searchLabel;
+		SwordCycleSteps = swordCycleSteps;
 	}
 
 	public bool Held(string action) => _held.Contains(action);

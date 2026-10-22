@@ -80,6 +80,7 @@ public partial class LootSystem : Node
 		Inventory.AddTo(items, "wood", random.Next(balance.ChestWoodMin, balance.ChestWoodMaxExclusive));
 		Inventory.AddTo(items, "sword_iron", random.Next(1, 3));
 		if (random.Next(balance.ChestBonusRollCount) == 0) Inventory.AddTo(items, "healing_potion", 1);
+		if (random.Next(3) == 0) Inventory.AddTo(items, "large_backpack", 1);
 		return items;
 	}
 

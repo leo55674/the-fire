@@ -29,7 +29,7 @@ public partial class GameSession : Node
 		}
 		_verticalVelocity += _balance.Gravity * dt;
 		if (!IsSwordControlled && _commands.Held("jump") && Player.Y >= GroundY) _verticalVelocity = -_balance.JumpImpulse;
-		Player = new Vector2(Player.X, MathF.Min(GroundY, Player.Y + _verticalVelocity * dt));
+		Player = new Vector2(Mathf.Clamp(Player.X, -_balance.WorldHalfWidth, _balance.WorldHalfWidth), MathF.Min(GroundY, Player.Y + _verticalVelocity * dt));
 		if (Player.Y >= GroundY) _verticalVelocity = 0;
 		var spiritPosition = IsSwordControlled ? SwordPosition : Player;
 		var emberRecovery = IsInSpiritRecoveryRange(spiritPosition) ? _balance.EmberTombRecovery : IsSwordControlled ? 0 : _balance.EmberPassiveRecovery;
@@ -42,6 +42,8 @@ public partial class GameSession : Node
 	private void UpdateSword(float dt)
 	{
 		_swordHitCooldown = MathF.Max(0, _swordHitCooldown - dt);
+		if (_commands.SwordCycleSteps != 0 && SwordState == SwordMode.Following && _weaponSystem.CycleActiveSword(_commands.SwordCycleSteps))
+			Message = $"主剑切换为{ActiveSwordName}。";
 		if (_commands.Pressed("replay_sword")) StartSwordReplay();
 		if (_commands.Pressed("sword_control"))
 		{
@@ -57,7 +59,7 @@ public partial class GameSession : Node
 				_recordingSamples.Clear();
 				_recordingSamples.Add(new SwordSample(0, Vector2.Zero));
 				EmitSignal(SignalName.SoundCueRequested, "control_enter");
-				Message = "神识进入照夜：移动鼠标御剑，再按右键归剑。";
+				Message = $"神识进入{ActiveSwordName}：移动鼠标御剑，再按右键归剑。";
 			}
 		}
 		var controlBlendTarget = IsSwordControlled ? 1f : 0f;
@@ -94,7 +96,7 @@ public partial class GameSession : Node
 				_swordAttackHit = true;
 				var killed = _enemySystem.Damage(attackHit, SwordDamage);
 				EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
-				Message = killed ? "照夜斩灭了一缕剑煞。" : $"照夜造成 {SwordDamage:0} 点伤害。";
+				Message = killed ? $"{ActiveSwordName}斩灭了一缕剑煞。" : $"{ActiveSwordName}造成 {SwordDamage:0} 点伤害。";
 			}
 			if (SwordPosition.DistanceTo(_swordAttackTarget) < 3) BeginSwordReturn(Message);
 			return;
@@ -117,14 +119,14 @@ public partial class GameSession : Node
 			_swordHitCooldown = _balance.SwordHitCooldown;
 			var killed = _enemySystem.Damage(hit, SwordDamage);
 			EmitSignal(SignalName.SoundCueRequested, killed ? "sword_defeat" : "sword_hit");
-			Message = killed ? "照夜贯穿了一缕剑煞。" : $"照夜造成 {SwordDamage:0} 点伤害。";
+			Message = killed ? $"{ActiveSwordName}贯穿了一缕剑煞。" : $"{ActiveSwordName}造成 {SwordDamage:0} 点伤害。";
 		}
 		if (Ember <= 0) BeginSwordReturn("神识耗尽，本命剑强制归剑。");
 	}
 
-	private Vector2 SwordFollowPosition() => Player + new Vector2(-PlayerFacing * 64, -44);
+	private Vector2 SwordFollowPosition() => Player + new Vector2(-_weaponSystem.FormationFacing * 64, -44);
 
-	private Vector2 ReplaySwordFollowPosition() => Player + new Vector2(PlayerFacing * 46, -60);
+	private Vector2 ReplaySwordFollowPosition() => Player + new Vector2(_weaponSystem.FormationFacing * 46, -44);
 	private bool IsInSpiritRecoveryRange(Vector2 position) =>
 		position.DistanceTo(MainFire) < _balance.SwordTombRadius || Fires.Exists(fire => position.DistanceTo(fire.Position) < fire.Radius);
 

@@ -4,3 +4,10 @@
 
 [resource]
 script = ExtResource("1_balance")
+world_half_width = 3600.0
+village_radius = 550.0
+enemy_aggro_range = 360.0
+enemy_wander_speed = 40.0
+enemy_wander_radius = 180.0
+day_duration = 90.0
+night_duration = 60.0

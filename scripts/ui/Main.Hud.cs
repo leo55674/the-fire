@@ -23,8 +23,11 @@ public partial class Main : Node2D
 		var swordRecordStatus = _session.IsSwordControlled ? $"录制剑式 {_session.SwordRecordingDuration:0.0} 秒"
 			: _session.IsReplaySwordActive ? "从剑正在连招" : $"连招 {_session.SwordCombo.Count} 式 · J 搭配 · R 出招";
 		DrawString(font, new Vector2(480, 44), swordRecordStatus, HorizontalAlignment.Left, 390, 16, new Color("f4d795"));
-		DrawString(font, new Vector2(480, 68), $"随行飞剑 {_session.SwordCount}/3：{_session.SwordRoster}", HorizontalAlignment.Left, 390, 15, new Color("cfe6f4"));
-		DrawString(font, new Vector2(18, size.Y - 42), "WASD 移动 | 左键攻击 | 右键御剑 | J 搭配 | R 连招 | F 搜刮/打造 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, -1, 14, new Color("d0d8df"));
+		DrawString(font, new Vector2(480, 68), $"飞剑 {_session.SwordCount}/3：{_session.SwordRoster} · 滚轮切主剑", HorizontalAlignment.Left, 500, 15, new Color("cfe6f4"));
+		DrawString(font, new Vector2(480, 92), $"{(_session.IsNight ? "夜晚" : "白天")} · 剩余 {MathF.Ceiling(_session.PhaseRemaining)} 秒", HorizontalAlignment.Left, 390, 15, new Color("f4d795"));
+		DrawString(font, new Vector2(18, size.Y - 40), "WASD 移动 | 左键攻击 | 右键御剑", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
+		DrawString(font, new Vector2(18, size.Y - 18), "滚轮切主剑 | J 搭配 | R 连招", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
+		DrawString(font, new Vector2(size.X / 2 + 145, size.Y - 40), "F 搜刮/打造 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
 		DrawTextureRect(_settingsIcon, new Rect2(size.X - 250, size.Y - 39, 24, 24), false);
 		DrawString(font, new Vector2(size.X - 220, size.Y - 18), "F1 \u8bbe\u7f6e", HorizontalAlignment.Left, -1, 14, new Color("aebbc8"));
 		DrawIconButton(GameExitButton(), _closeIcon, "\u9000\u51fa\u6e38\u620f", new Color("442939"));
@@ -60,9 +63,10 @@ public partial class Main : Node2D
 		var panel = new Rect2(size.X - 222, 18, 204, 110);
 		DrawRect(panel, new Color("080b12", .82f)); DrawRect(panel, new Color("607080"), false, 1);
 		DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(10, 19), "\u8ff7\u96fe\u5730\u56fe", HorizontalAlignment.Left, -1, 14, new Color("c9d7e6"));
-		const float worldWidth = 3600;
+		var worldWidth = _session.WorldHalfWidth * 2;
 		Vector2 Marker(Vector2 world) => new(panel.Position.X + 9 + (world.X + worldWidth / 2) / worldWidth * (panel.Size.X - 18), panel.Position.Y + 63);
 		DrawRect(new Rect2(panel.Position + new Vector2(9, 62), new Vector2(panel.Size.X - 18, 2)), new Color("314150"));
+		DrawRect(new Rect2(Marker(new Vector2(-_session.VillageRadius, 0)) - new Vector2(0, 3), new Vector2(_session.VillageRadius * 2 / worldWidth * (panel.Size.X - 18), 8)), new Color("69b7b0", .55f));
 		DrawCircle(Marker(_session.MainFire), 5, new Color("ff9d4d"));
 		foreach (var fire in _session.Fires) DrawCircle(Marker(fire.Position), 3, new Color("ffd46b"));
 		foreach (var enemy in _session.Enemies) if (_session.IsVisible(enemy.Position)) DrawCircle(Marker(enemy.Position), 3, new Color("c66a77"));
@@ -70,6 +74,17 @@ public partial class Main : Node2D
 		DrawLine(Marker(_session.Player) - Vector2.Right * sight, Marker(_session.Player) + Vector2.Right * sight, new Color("dfeeff", .28f), 5);
 		DrawCircle(Marker(_session.Player), 4, new Color("ecf4ff"));
 		DrawString(ThemeDB.FallbackFont, panel.Position + new Vector2(10, 97), "\u767d\u8272\uff1a\u4f60  \u6a59\u8272\uff1a\u4e3b\u706b", HorizontalAlignment.Left, -1, 11, new Color("9faebb"));
+	}
+
+	private void DrawVillageBoundary(Vector2 size)
+	{
+		foreach (var side in new[] { -1, 1 })
+		{
+			var x = size.X / 2 + side * _session.VillageRadius - _session.CameraFocus.X;
+			if (x < 0 || x > size.X) continue;
+			DrawLine(new Vector2(x, _session.GroundY - 130), new Vector2(x, _session.GroundY), new Color("8bd2c4", .65f), 2);
+			DrawString(ThemeDB.FallbackFont, new Vector2(x + 8, _session.GroundY - 100), "村庄边界", HorizontalAlignment.Left, -1, 14, new Color("b9e4dc"));
+		}
 	}
 
 	private void DrawIconButton(Rect2 rect, Texture2D icon, string text, Color color)

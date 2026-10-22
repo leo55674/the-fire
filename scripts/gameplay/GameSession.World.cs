@@ -5,6 +5,13 @@ public partial class GameSession : Node
 {
 	private void UpdateFire(float dt)
 	{
+		PhaseRemaining -= dt;
+		if (PhaseRemaining <= 0)
+		{
+			IsNight = !IsNight;
+			PhaseRemaining += IsNight ? _balance.NightDuration : _balance.DayDuration;
+			Message = IsNight ? "夜幕降临，啮阵兽开始袭击村庄。" : "天亮了，村庄暂时安全。";
+		}
 		Fuel = MathF.Max(0, Fuel - (_balance.FuelBaseDecay + FireLevel * _balance.FuelDecayPerFireLevel) * dt);
 		if (Fuel <= 0)
 		{
@@ -18,7 +25,7 @@ public partial class GameSession : Node
 			if (Chests.FindAll(chest => !chest.Searched).Count < _balance.ChestMaxUnsearchedCount) SpawnChestNearPlayer();
 			_chestSpawnTimer = _random.Next((int)_balance.ChestInitialSpawnInterval, (int)_balance.ChestInitialSpawnInterval + 7);
 		}
-		_enemySystem.AdvanceSpawning(dt, FireLevel, DreamAsh, GroundY);
+		_enemySystem.AdvanceSpawning(dt, FireLevel, DreamAsh, GroundY, Player.X, IsNight || FinalNight > 0);
 		if (FinalNight > 0 && (FinalNight -= dt) <= 0) Message = "剑冢守住了最终剑潮。";
 	}
 

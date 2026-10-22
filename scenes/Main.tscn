@@ -35,6 +35,7 @@
 [ext_resource type="Script" path="res://scripts/gameplay/weapons/WeaponSystem.cs" id="47_weapon_system"]
 [ext_resource type="PackedScene" path="res://scenes/ui/LootPanel.tscn" id="51_loot_panel"]
 [ext_resource type="Script" path="res://scripts/gameplay/LootSystem.cs" id="52_loot_system"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SwordCaseHud.tscn" id="53_sword_case_hud"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tree_1"]
 atlas = ExtResource("9_trees")
@@ -48,7 +49,7 @@ region = Rect2(388, 44, 298, 574)
 atlas = ExtResource("9_trees")
 region = Rect2(714, 126, 288, 490)
 
-[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas", "_lootPanel")]
+[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas", "_lootPanel", "_swordCaseHud")]
 script = ExtResource("1_main")
 _input = NodePath("ActionBindings")
 _session = NodePath("GameSession")
@@ -62,6 +63,7 @@ _settingsButtonView = NodePath("Interface/MainMenu/SettingsButton")
 _exitButtonView = NodePath("Interface/MainMenu/ExitButton")
 _panelCanvas = NodePath("PanelCanvas")
 _lootPanel = NodePath("LootPanel")
+_swordCaseHud = NodePath("Interface/SwordCaseHud")
 
 [node name="PanelCanvas" type="Node2D" parent="." unique_id=364377465]
 z_index = 5
@@ -272,6 +274,9 @@ default_color = Color(0.85098, 0.835294, 0.772549, 1)
 layer = 10
 
 [node name="Settings" parent="Interface" unique_id=721036745 instance=ExtResource("37_settings")]
+visible = false
+
+[node name="SwordCaseHud" parent="Interface" instance=ExtResource("53_sword_case_hud")]
 visible = false
 
 [node name="MainMenu" type="Control" parent="Interface" unique_id=424085361]

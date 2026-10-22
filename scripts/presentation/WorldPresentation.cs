@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public partial class WorldPresentation : Node2D
 {
+	private const int SwordFrontZIndex = 13;
 	private static readonly Rect2[] TreeRegions =
 	{
 		new(16, 4, 354, 612), new(388, 44, 298, 574), new(714, 126, 288, 490),
@@ -32,14 +33,12 @@ public partial class WorldPresentation : Node2D
 	private readonly List<EnemyPresentation> _enemyVisuals = new();
 	private readonly List<ColorRect> _chestBodies = new();
 	private readonly List<ColorRect> _chestLids = new();
-	private readonly List<Vector2> _swordTrailPoints = new();
-	private readonly List<Vector2> _replayTrailPoints = new();
 	private FlyingSwordPresentation _swordVisual;
 	private FlyingSwordPresentation _replayVisual;
-	private readonly FlyingSwordPresentation[] _companionSwordVisuals = new FlyingSwordPresentation[2];
-	private Line2D _swordTrail;
-	private Line2D _replayTrail;
-	private Line2D _spiritLine;
+	private readonly FlyingSwordPresentation[] _swordVisuals = new FlyingSwordPresentation[3];
+	private readonly Vector2[] _swordDisplayPositions = new Vector2[3];
+	private readonly bool[] _swordDisplayInitialized = new bool[3];
+	private readonly CpuParticles2D[] _attackParticles = new CpuParticles2D[3];
 
 	public override void _Ready()
 	{
@@ -47,27 +46,28 @@ public partial class WorldPresentation : Node2D
 			throw new InvalidOperationException("WorldPresentation requires three enemy scenes, the flying sword scene, and the blacksmith.");
 		foreach (var child in _trees.GetChildren())
 			if (child is Sprite2D tree) _treeVisuals.Add(tree);
-		_swordTrail = new Line2D { Name = "SwordTrail", Width = 5, DefaultColor = new Color("78dfff", .42f) };
-		_replayTrail = new Line2D { Name = "ReplaySwordTrail", Width = 4, DefaultColor = new Color("f4c978", .55f) };
-		_spiritLine = new Line2D { Name = "SpiritLine", Width = 2, DefaultColor = new Color("8be8ff", .5f) };
-		_swordVisual = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
-		_swordVisual.Name = "Zhaoye";
-		_swordVisual.Configure(FlyingSwordPresentation.SwordVisual.Zhaoye);
+		var swordNames = new[] { "Zhaoye", "Shuanghua", "Bilan" };
+		for (var i = 0; i < _swordVisuals.Length; i++)
+		{
+			var sword = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
+			sword.Name = swordNames[i];
+			sword.Configure(SwordVisualFor(i));
+			_swordVisuals[i] = sword;
+			_attackParticles[i] = new CpuParticles2D
+			{
+				Name = "AttackParticles", Amount = 14, Lifetime = .2, Emitting = false,
+				LocalCoords = false, Direction = Vector2.Left, Spread = 35,
+				InitialVelocityMin = 35, InitialVelocityMax = 75,
+				Gravity = Vector2.Zero, Color = new Color("b7f4ff", .85f)
+			};
+			sword.AddChild(_attackParticles[i]);
+		}
+		_swordVisual = _swordVisuals[0];
 		_replayVisual = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
 		_replayVisual.Name = "ReplaySword";
 		_replayVisual.Configure(FlyingSwordPresentation.SwordVisual.ZhaoyeReplay);
-		_projectiles.AddChild(_swordTrail);
-		_projectiles.AddChild(_replayTrail);
-		_projectiles.AddChild(_spiritLine);
-		_projectiles.AddChild(_swordVisual);
+		foreach (var sword in _swordVisuals) _projectiles.AddChild(sword);
 		_projectiles.AddChild(_replayVisual);
-		_companionSwordVisuals[0] = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
-		_companionSwordVisuals[0].Name = "Shuanghua";
-		_companionSwordVisuals[0].Configure(FlyingSwordPresentation.SwordVisual.Shuanghua);
-		_companionSwordVisuals[1] = _flyingSwordScene.Instantiate<FlyingSwordPresentation>();
-		_companionSwordVisuals[1].Name = "Bilan";
-		_companionSwordVisuals[1].Configure(FlyingSwordPresentation.SwordVisual.Bilan);
-		foreach (var sword in _companionSwordVisuals) _projectiles.AddChild(sword);
 	}
 
 	public void Sync(GameSession session, bool menuOpen)
@@ -98,19 +98,53 @@ public partial class WorldPresentation : Node2D
 
 	private void UpdateCompanionSwords(GameSession session)
 	{
-		for (var i = 0; i < _companionSwordVisuals.Length; i++)
+		for (var i = 0; i < session.CompanionSwordPositions.Count; i++)
 		{
-			var sword = _companionSwordVisuals[i];
-			sword.Present(Screen(session, session.CompanionSwordPositions[i]), -Mathf.Pi / 2, session.SwordCount > i + 1);
+			var swordIndex = session.CompanionSwordIndex(i);
+			if (swordIndex < 0) continue;
+			var sword = _swordVisuals[swordIndex];
+			sword.ZIndex = SwordFrontZIndex - i - 1;
+			sword.Present(FollowSword(session, swordIndex, session.CompanionSwordPositions[i]), -Mathf.Pi / 2, true);
 		}
+		for (var i = session.SwordCount; i < _swordVisuals.Length; i++) _swordVisuals[i].Visible = false;
 	}
+
+	private Vector2 FollowSword(GameSession session, int swordIndex, Vector2 target)
+	{
+		var blend = 1 - MathF.Exp(-10 * MathF.Min((float)GetProcessDeltaTime(), .05f));
+		_swordDisplayPositions[swordIndex] = _swordDisplayInitialized[swordIndex]
+			? _swordDisplayPositions[swordIndex].Lerp(target, blend) : target;
+		_swordDisplayInitialized[swordIndex] = true;
+		var time = (float)Time.GetTicksMsec() * .001f;
+		var phase = swordIndex * 2.17f;
+		var bob = Mathf.Sin(time * (2.1f + swordIndex * .23f) + phase) * 3f
+			+ Mathf.Sin(time * (1.17f + swordIndex * .19f) + phase * .7f) * 1.2f;
+		return Screen(session, _swordDisplayPositions[swordIndex]) + new Vector2(0, bob);
+	}
+
+	private static FlyingSwordPresentation.SwordVisual SwordVisualFor(int index) => index switch
+	{
+		1 => FlyingSwordPresentation.SwordVisual.Shuanghua,
+		2 => FlyingSwordPresentation.SwordVisual.Bilan,
+		_ => FlyingSwordPresentation.SwordVisual.Zhaoye
+	};
 
 	private Vector2 Screen(GameSession session, Vector2 world) =>
 		new(GetViewportRect().Size.X / 2 + world.X - session.CameraFocus.X, world.Y);
 
 	private void UpdateSword(GameSession session)
 	{
-		var swordScreen = Screen(session, session.SwordPosition);
+		var swordIndex = session.ActiveSwordIndex;
+		_swordVisual = _swordVisuals[swordIndex];
+		_swordVisual.ZIndex = SwordFrontZIndex;
+		var swordScreen = session.SwordState == GameSession.SwordMode.Following
+			? FollowSword(session, swordIndex, session.SwordPosition)
+			: Screen(session, session.SwordPosition);
+		if (session.SwordState != GameSession.SwordMode.Following)
+		{
+			_swordDisplayPositions[swordIndex] = session.SwordPosition;
+			_swordDisplayInitialized[swordIndex] = true;
+		}
 		var targetRotation = session.SwordState == GameSession.SwordMode.Following
 			? -Mathf.Pi / 2
 			: session.SwordVelocity.LengthSquared() > 1 ? session.SwordVelocity.Angle() : _swordVisual.Rotation;
@@ -120,45 +154,18 @@ public partial class WorldPresentation : Node2D
 			targetRotation = Mathf.LerpAngle(targetRotation, -Mathf.Pi / 2, lift);
 		}
 		_swordVisual.Present(swordScreen, Mathf.LerpAngle(_swordVisual.Rotation, targetRotation, .18f), true);
-
-		if (session.IsSwordInFlight)
-		{
-			_swordTrailPoints.Add(session.SwordPosition);
-			if (_swordTrailPoints.Count > 18) _swordTrailPoints.RemoveAt(0);
-		}
-		else if (_swordTrailPoints.Count > 0) _swordTrailPoints.RemoveAt(0);
-		var trail = new Vector2[_swordTrailPoints.Count];
-		for (var i = 0; i < trail.Length; i++) trail[i] = Screen(session, _swordTrailPoints[i]);
-		_swordTrail.Points = trail;
-		_spiritLine.Visible = session.SwordControlBlend > .01f;
-		if (_spiritLine.Visible)
-		{
-			_spiritLine.Points = new[] { Screen(session, session.Player) + new Vector2(0, -35), swordScreen };
-			var color = session.SwordDistance > 580 ? new Color("ff6670", .8f) : new Color("8be8ff", .5f);
-			color.A *= session.SwordControlBlend;
-			_spiritLine.DefaultColor = color;
-			_spiritLine.Width = Mathf.Lerp(1, 2, session.SwordControlBlend);
-		}
+		for (var i = 0; i < _attackParticles.Length; i++)
+			_attackParticles[i].Emitting = i == swordIndex && session.SwordState == GameSession.SwordMode.Attacking;
 	}
 
 	private void UpdateReplaySword(GameSession session)
 	{
 		_replayVisual.Visible = session.HasRecordedSword;
-		_replayTrail.Visible = session.IsReplaySwordActive;
-		if (!session.HasRecordedSword) { _replayTrailPoints.Clear(); return; }
+		if (!session.HasRecordedSword) return;
 		_replayVisual.Position = Screen(session, session.ReplaySwordPosition);
 		var rotation = session.IsReplaySwordActive && session.ReplaySwordVelocity.LengthSquared() > 1
 			? session.ReplaySwordVelocity.Angle() : -Mathf.Pi / 2;
 		_replayVisual.Rotation = Mathf.LerpAngle(_replayVisual.Rotation, rotation, .18f);
-		if (session.IsReplaySwordActive)
-		{
-			_replayTrailPoints.Add(session.ReplaySwordPosition);
-			if (_replayTrailPoints.Count > 18) _replayTrailPoints.RemoveAt(0);
-		}
-		else _replayTrailPoints.Clear();
-		var trail = new Vector2[_replayTrailPoints.Count];
-		for (var i = 0; i < trail.Length; i++) trail[i] = Screen(session, _replayTrailPoints[i]);
-		_replayTrail.Points = trail;
 	}
 
 	private void UpdateGround(Vector2 viewport, float groundY)

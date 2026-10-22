@@ -12,7 +12,6 @@ script = ExtResource("1_script")
 visible = false
 scale = Vector2(0.06, 0.06)
 texture = ExtResource("2_zhaoye")
-offset = Vector2(291, 16)
 
 [node name="Shuanghua" type="Sprite2D" parent="." unique_id=1121769286]
 visible = false
@@ -28,4 +27,3 @@ texture = ExtResource("4_bilan")
 modulate = Color(1, 0.851, 0.569, 0.82)
 scale = Vector2(0.06, 0.06)
 texture = ExtResource("2_zhaoye")
-offset = Vector2(291, 16)

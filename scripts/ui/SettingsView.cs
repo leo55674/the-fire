@@ -132,7 +132,11 @@ public partial class SettingsView : Control
 			{
 				CloseVolumeDrag(); Tab = i; EditingAction = null; Refresh(); return;
 			}
-		if (EditingAction != null) { Input.Rebind(EditingAction, mouse.ButtonIndex); EditingAction = null; }
+		if (EditingAction != null)
+		{
+			if (mouse.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelDown) return;
+			Input.Rebind(EditingAction, mouse.ButtonIndex); EditingAction = null;
+		}
 		else SelectRow(mouse.Position, mouse.ButtonIndex);
 		Refresh();
 	}
@@ -185,7 +189,7 @@ public partial class SettingsView : Control
 		}
 		_help.Position = new Vector2(0, 91);
 		_help.Size = new Vector2(content.Size.X, 25);
-		_help.Text = Tab == 0 ? "点击分辨率切换，拖动滑块调整全局音量" : EditingAction == null ? "点击操作后按下新按键" : "请按下新的按键或鼠标键";
+		_help.Text = Tab == 0 ? "点击分辨率切换，拖动滑块调整全局音量" : EditingAction == null ? "点击操作后按下新按键（滚轮切换主剑）" : "请按下新的按键或鼠标键（滚轮保留给主剑）";
 		_footer.Position = new Vector2(0, content.Size.Y - 29);
 		_footer.Size = new Vector2(content.Size.X, 25);
 		_generalPage.Visible = Tab == 0;

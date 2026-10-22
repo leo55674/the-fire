@@ -56,6 +56,10 @@ public partial class GameSession : Node
 	public float SwingTime { get; private set; }
 	public float HurtTime { get; private set; }
 	public float FinalNight { get; private set; }
+	public bool IsNight { get; private set; }
+	public float PhaseRemaining { get; private set; }
+	public float WorldHalfWidth => _balance.WorldHalfWidth;
+	public float VillageRadius => _balance.VillageRadius;
 	public Vector2 SwordPosition { get; private set; }
 	public Vector2 SwordVelocity { get; private set; }
 	public Vector2 ReplaySwordPosition { get; private set; }
@@ -78,6 +82,9 @@ public partial class GameSession : Node
 	public float SwordDamage => _balance.SwordDamage;
 	public int SwordCount => _weaponSystem.EquippedCount;
 	public string SwordRoster => _weaponSystem.EquippedNames;
+	public int ActiveSwordIndex => _weaponSystem.ActiveSwordIndex;
+	public string ActiveSwordName => _weaponSystem.ActiveSwordName;
+	public int CompanionSwordIndex(int slot) => _weaponSystem.CompanionSwordIndex(slot);
 	public IReadOnlyList<Vector2> CompanionSwordPositions => _weaponSystem.CompanionSwordPositions;
 	public Vector2 BlacksmithPosition => _blacksmith.WorldPosition(GroundY);
 	public int SwordIron => _inventory?.Count("sword_iron") ?? 0;
@@ -116,11 +123,13 @@ public partial class GameSession : Node
 		Ember = _balance.StartingEmber;
 		FireLevel = _balance.StartingFireLevel;
 		_enemySystem.Initialize(_balance, _random);
+		IsNight = false;
+		PhaseRemaining = _balance.DayDuration;
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
 		Player = MainFire;
 		PlayerMoving = false;
+		_weaponSystem.ResetEquipment(PlayerFacing);
 		SwordPosition = SwordFollowPosition();
-		_weaponSystem.ResetEquipment();
 		_weaponSystem.UpdateFollowers(Player, PlayerFacing, 1);
 		ReplaySwordPosition = ReplaySwordFollowPosition();
 		_recordingSamples.Clear();
@@ -133,8 +142,8 @@ public partial class GameSession : Node
 		_replayReturning = false;
 		CameraFocus = Player;
 		Trees.Clear();
-		for (var i = -10; i <= 10; i++)
-			if (i != 0) Trees.Add(new TreeState(i * 155 + _random.Next(-35, 36), GroundY));
+		for (var i = -(int)(_balance.WorldHalfWidth / 155); i <= (int)(_balance.WorldHalfWidth / 155); i++)
+			if (i != 0 && MathF.Abs(i * 155) > _balance.VillageRadius) Trees.Add(new TreeState(i * 155 + _random.Next(-35, 36), GroundY));
 		Chests.Clear();
 		SpawnChestNearPlayer();
 		SpawnChestNearPlayer();
@@ -166,10 +175,10 @@ public partial class GameSession : Node
 		var previousPlayer = Player;
 		UpdatePlayer(dt);
 		PlayerMoving = MathF.Abs(Player.X - previousPlayer.X) > .1f || IsDashing;
-		UpdateSword(dt);
 		_weaponSystem.UpdateFollowers(Player, PlayerFacing, dt);
+		UpdateSword(dt);
 		UpdateFire(dt);
-		_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory);
+		_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory, IsNight || FinalNight > 0);
 		UpdateTemporaryFires(dt);
 		HandleInteractions();
 		HandleCombat();

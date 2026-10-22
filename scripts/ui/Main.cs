@@ -26,6 +26,7 @@ public partial class Main : Node2D
 	[Export] private TextureRect _exitButtonView;
 	[Export] private LayeredPanelCanvas _panelCanvas;
 	[Export] private LootPanel _lootPanel;
+	[Export] private SwordCaseHud _swordCaseHud;
 	private bool _mainMenuOpen = true;
 	private bool _settingsOpen;
 	private int _selectedMenuItem;
@@ -35,8 +36,8 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
-		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null || _lootPanel == null)
-			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, LayeredPanelCanvas, and LootPanel nodes.");
+		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null || _lootPanel == null || _swordCaseHud == null)
+			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, LayeredPanelCanvas, LootPanel, and SwordCaseHud nodes.");
 		_panelCanvas.DrawPanels = DrawLayeredPanels;
 		_lootPanel.Session = _session;
 		_menuButtonNormal = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png");
@@ -64,6 +65,10 @@ public partial class Main : Node2D
 		var mouse = GetViewport().GetMousePosition();
 		var attackTarget = new Vector2(_session.CameraFocus.X + mouse.X - GetViewport().GetVisibleRect().Size.X / 2, mouse.Y);
 		_session.Tick(dt, _input.ConsumeGameplay(attackTarget));
+		SyncSwordCaseHud();
+		var daylight = _session.IsNight || _session.FinalNight > 0 ? new Color(.48f, .58f, .78f) : Colors.White;
+		_gameBackdropView.Modulate = daylight;
+		_worldPresentation.Modulate = daylight;
 		SyncMouseMode();
 		_worldPresentation.Sync(_session, false);
 		QueueRedraw();
@@ -207,8 +212,15 @@ public partial class Main : Node2D
 		_settingsView.Resolution = Resolutions[_resolutionIndex];
 		_settingsView.MasterVolume = _masterVolume;
 		_settingsView.Refresh();
+		SyncSwordCaseHud();
 		if (!_mainMenuOpen) _worldPresentation.Sync(_session, false);
 		QueueRedraw();
+	}
+
+	private void SyncSwordCaseHud()
+	{
+		_swordCaseHud.Visible = !_mainMenuOpen && !_settingsOpen && !_session.InventoryOpen && !_session.ComboOpen;
+		if (_swordCaseHud.Visible) _swordCaseHud.Sync(_session);
 	}
 
 	private void SyncMouseMode() => Input.MouseMode = !_mainMenuOpen && !_settingsOpen && _session.WantsMouseCapture
@@ -225,6 +237,7 @@ public partial class Main : Node2D
 		var size = GetViewportRect().Size;
 		if (_mainMenuOpen) UpdateMenuView();
 		if (_mainMenuOpen) return;
+		DrawVillageBoundary(size);
 		DrawHud(size);
 	}
 }
