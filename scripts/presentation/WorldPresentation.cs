@@ -27,6 +27,7 @@ public partial class WorldPresentation : Node2D
 	[Export] private Node2D _projectiles;
 	[Export] private Line2D _axeSwing;
 	[Export] private PlayerPresentation _player;
+	[Export] private Sprite2D _realmEntrance;
 
 	private readonly List<Sprite2D> _treeVisuals = new();
 	private readonly List<Sprite2D> _fireVisuals = new();
@@ -76,15 +77,29 @@ public partial class WorldPresentation : Node2D
 		if (menuOpen) return;
 
 		var viewport = GetViewportRect().Size;
-		UpdateGround(viewport, session.GroundY);
-		UpdateRoad(viewport, session);
-		UpdateTrees(session);
-		UpdateMainFire(session);
-		UpdateBlacksmith(session);
-		UpdateName(session);
-		UpdateFires(session);
-		UpdateEnemies(session);
-		UpdateChests(session);
+		_ground.Visible = !session.IsInRealm;
+		_road.Visible = !session.IsInRealm;
+		_trees.Visible = !session.IsInRealm;
+		_mainFire.Visible = !session.IsInRealm;
+		_blacksmith.Visible = !session.IsInRealm;
+		_nameFragment.Visible = !session.IsInRealm;
+		_temporaryFires.Visible = !session.IsInRealm;
+		_enemies.Visible = !session.IsInRealm;
+		_chests.Visible = !session.IsInRealm;
+		_realmEntrance.Visible = !session.IsInRealm;
+		if (!session.IsInRealm)
+		{
+			UpdateGround(viewport, session.GroundY);
+			UpdateRoad(viewport, session);
+			UpdateTrees(session);
+			UpdateMainFire(session);
+			UpdateBlacksmith(session);
+			UpdateName(session);
+			UpdateFires(session);
+			UpdateEnemies(session);
+			UpdateChests(session);
+			_realmEntrance.Position = Screen(session, new Vector2(GameSession.RealmEntranceX, session.GroundY)) + new Vector2(-608, -367);
+		}
 		UpdateSword(session);
 		UpdateCompanionSwords(session);
 		UpdateReplaySword(session);

@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/bosses/FrostWraithKnight.cs" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assets/art/runtime/characters/bosses/frost_wraith_knight.png" id="2_art"]
+
+[node name="FrostWraithKnight" type="Node2D" node_paths=PackedStringArray("_sprite", "_healthLabel")]
+script = ExtResource("1_boss")
+_sprite = NodePath("Sprite")
+_healthLabel = NodePath("HealthLabel")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -290)
+scale = Vector2(0.48, 0.48)
+texture = ExtResource("2_art")
+
+[node name="HealthLabel" type="Label" parent="."]
+offset_left = -160.0
+offset_top = -625.0
+offset_right = 160.0
+offset_bottom = -590.0
+theme_override_colors/font_color = Color(0.75, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "霜冥骑士  600/600"
+horizontal_alignment = 1

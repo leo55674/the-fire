@@ -30,12 +30,15 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/enemies/Thief.tscn" id="39_thief"]
 [ext_resource type="Script" uid="uid://dxso0lw7flwtq" path="res://scripts/gameplay/EnemySystem.cs" id="40_enemies"]
 [ext_resource type="Script" uid="uid://dgbeg57b354h4" path="res://scripts/ui/LayeredPanelCanvas.cs" id="41_panel_canvas"]
-[ext_resource type="PackedScene" path="res://scenes/actors/weapons/FlyingSword.tscn" id="45_sword_scene"]
-[ext_resource type="PackedScene" path="res://scenes/actors/Blacksmith.tscn" id="46_blacksmith_scene"]
-[ext_resource type="Script" path="res://scripts/gameplay/weapons/WeaponSystem.cs" id="47_weapon_system"]
-[ext_resource type="PackedScene" path="res://scenes/ui/LootPanel.tscn" id="51_loot_panel"]
-[ext_resource type="Script" path="res://scripts/gameplay/LootSystem.cs" id="52_loot_system"]
-[ext_resource type="PackedScene" path="res://scenes/ui/SwordCaseHud.tscn" id="53_sword_case_hud"]
+[ext_resource type="PackedScene" uid="uid://usy8p2e1j4t2" path="res://scenes/actors/weapons/FlyingSword.tscn" id="45_sword_scene"]
+[ext_resource type="PackedScene" uid="uid://ct86siikj7ngm" path="res://scenes/actors/Blacksmith.tscn" id="46_blacksmith_scene"]
+[ext_resource type="Script" uid="uid://bkfwqm47rygy4" path="res://scripts/gameplay/weapons/WeaponSystem.cs" id="47_weapon_system"]
+[ext_resource type="PackedScene" uid="uid://cb7r6grh6jpdw" path="res://scenes/ui/LootPanel.tscn" id="51_loot_panel"]
+[ext_resource type="Script" uid="uid://d3rbn62ogq6ek" path="res://scripts/gameplay/LootSystem.cs" id="52_loot_system"]
+[ext_resource type="PackedScene" uid="uid://bveku1nttb5ym" path="res://scenes/ui/SwordCaseHud.tscn" id="53_sword_case_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ForgePanel.tscn" id="54_forge_panel"]
+[ext_resource type="Texture2D" uid="uid://dcqlaatqhjd3y" path="res://assets/art/runtime/environment/realms/frost_cavern_entrance.png" id="55_realm_entrance"]
+[ext_resource type="PackedScene" path="res://scenes/realms/FrostRealm.tscn" id="56_frost_realm"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tree_1"]
 atlas = ExtResource("9_trees")
@@ -49,7 +52,7 @@ region = Rect2(388, 44, 298, 574)
 atlas = ExtResource("9_trees")
 region = Rect2(714, 126, 288, 490)
 
-[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas", "_lootPanel", "_swordCaseHud")]
+[node name="Sword" type="Node2D" unique_id=503442402 node_paths=PackedStringArray("_input", "_session", "_worldPresentation", "_settingsView", "_titleBackdropView", "_gameBackdropView", "_mainMenuView", "_startButtonView", "_settingsButtonView", "_exitButtonView", "_panelCanvas", "_lootPanel", "_swordCaseHud", "_forgePanel", "_frostRealm")]
 script = ExtResource("1_main")
 _input = NodePath("ActionBindings")
 _session = NodePath("GameSession")
@@ -64,12 +67,16 @@ _exitButtonView = NodePath("Interface/MainMenu/ExitButton")
 _panelCanvas = NodePath("PanelCanvas")
 _lootPanel = NodePath("LootPanel")
 _swordCaseHud = NodePath("Interface/SwordCaseHud")
+_forgePanel = NodePath("Interface/ForgePanel")
+_frostRealm = NodePath("FrostRealm")
+
+[node name="FrostRealm" parent="." unique_id=725396973 instance=ExtResource("56_frost_realm")]
 
 [node name="PanelCanvas" type="Node2D" parent="." unique_id=364377465]
 z_index = 5
 script = ExtResource("41_panel_canvas")
 
-[node name="LootPanel" parent="." instance=ExtResource("51_loot_panel")]
+[node name="LootPanel" parent="." unique_id=1150792540 instance=ExtResource("51_loot_panel")]
 Session = NodePath("../GameSession")
 
 [node name="ActionBindings" type="Node" parent="." unique_id=1966097770]
@@ -90,10 +97,10 @@ _balanceResource = ExtResource("35_balance")
 [node name="EnemySystem" type="Node" parent="GameSession" unique_id=1597592388]
 script = ExtResource("40_enemies")
 
-[node name="WeaponSystem" type="Node" parent="GameSession"]
+[node name="WeaponSystem" type="Node" parent="GameSession" unique_id=1689027239]
 script = ExtResource("47_weapon_system")
 
-[node name="LootSystem" type="Node" parent="GameSession"]
+[node name="LootSystem" type="Node" parent="GameSession" unique_id=108679734]
 script = ExtResource("52_loot_system")
 
 [node name="Audio" type="Node" parent="." unique_id=2029655943 node_paths=PackedStringArray("_session", "_music", "_swordLaunch", "_swordHit", "_swordDefeat", "_controlEnter", "_swordReturn", "_spiritHurt")]
@@ -161,7 +168,7 @@ texture = ExtResource("7_game")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="World" type="Node2D" parent="." unique_id=1139518992 node_paths=PackedStringArray("_road", "_ground", "_trees", "_mainFire", "_blacksmith", "_nameFragment", "_temporaryFires", "_enemies", "_chests", "_projectiles", "_axeSwing", "_player")]
+[node name="World" type="Node2D" parent="." unique_id=1139518992 node_paths=PackedStringArray("_road", "_ground", "_trees", "_mainFire", "_blacksmith", "_nameFragment", "_temporaryFires", "_enemies", "_chests", "_projectiles", "_axeSwing", "_player", "_realmEntrance")]
 visible = false
 z_index = -1
 script = ExtResource("5_world")
@@ -182,14 +189,21 @@ _chests = NodePath("DynamicEntities/Chests")
 _projectiles = NodePath("DynamicEntities/Projectiles")
 _axeSwing = NodePath("Actors/AxeSwing")
 _player = NodePath("Actors/PlayerPresentation")
+_realmEntrance = NodePath("Environment/RealmEntrance")
 
 [node name="Environment" type="Node2D" parent="World" unique_id=1560457430]
+
+[node name="RealmEntrance" type="Sprite2D" parent="World/Environment" unique_id=1902633033]
+z_index = 3
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("55_realm_entrance")
+centered = false
 
 [node name="Ground" type="Polygon2D" parent="World/Environment" unique_id=2021894169]
 color = Color(0.0901961, 0.129412, 0.164706, 1)
 polygon = PackedVector2Array(0, 840, 1920, 840, 1920, 1080, 0, 1080)
 
-[node name="Blacksmith" parent="World/Environment" instance=ExtResource("46_blacksmith_scene")]
+[node name="Blacksmith" parent="World/Environment" unique_id=1126975370 instance=ExtResource("46_blacksmith_scene")]
 
 [node name="Road" type="Node2D" parent="World/Environment" unique_id=1047413327]
 
@@ -276,7 +290,7 @@ layer = 10
 [node name="Settings" parent="Interface" unique_id=721036745 instance=ExtResource("37_settings")]
 visible = false
 
-[node name="SwordCaseHud" parent="Interface" instance=ExtResource("53_sword_case_hud")]
+[node name="SwordCaseHud" parent="Interface" unique_id=1048769198 instance=ExtResource("53_sword_case_hud")]
 visible = false
 
 [node name="MainMenu" type="Control" parent="Interface" unique_id=424085361]
@@ -394,3 +408,5 @@ theme_override_colors/font_color = Color(0.780392, 0.815686, 0.85098, 1)
 theme_override_font_sizes/font_size = 18
 text = "↑↓ / W S 选择  |  Enter 确认  |  F1 设置"
 horizontal_alignment = 1
+
+[node name="ForgePanel" parent="Interface" unique_id=1388414174 instance=ExtResource("54_forge_panel")]

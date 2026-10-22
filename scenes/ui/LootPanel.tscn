@@ -1,7 +1,419 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cb7r6grh6jpdw"]
 
-[ext_resource type="Script" path="res://scripts/ui/LootPanel.cs" id="1_loot_panel"]
+[ext_resource type="Script" uid="uid://b5xmbf4k2oum1" path="res://scripts/ui/LootPanel.cs" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://ch23hdsf313kb" path="res://assets/art/runtime/ui/inventory/ui_inventory_frame.png" id="2_frame"]
+[ext_resource type="Texture2D" uid="uid://c58mdchlgovaq" path="res://assets/art/runtime/characters/player/keeper/chr_keeper_turnaround.png" id="3_keeper"]
+[ext_resource type="Texture2D" uid="uid://fv5jcumawioh" path="res://assets/art/runtime/ui/sword_case/ui_sword_zhaoye.png" id="4_sword"]
 
-[node name="LootPanel" type="Node2D"]
-z_index = 6
-script = ExtResource("1_loot_panel")
+[sub_resource type="AtlasTexture" id="Portrait"]
+atlas = ExtResource("3_keeper")
+region = Rect2(49, 18, 530, 775)
+
+[sub_resource type="StyleBoxFlat" id="InventoryButtonStyle"]
+bg_color = Color(0.071, 0.145, 0.231, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.835, 0.678, 0.412, 1)
+
+[sub_resource type="StyleBoxFlat" id="LootPanelStyle"]
+bg_color = Color(0.047, 0.071, 0.11, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.776, 0.608, 0.361, 1)
+
+[node name="LootPanel" type="Node2D" unique_id=307022396 node_paths=PackedStringArray("_layout", "_backdrop", "_frame", "_gridArea", "_closeButton", "_splitButton", "_sortButton", "_swordRoster", "_backpackName", "_capacity", "_description", "_bagDragHandle", "_lootLayout", "_lootFrame", "_lootGridArea", "_lootTitle", "_lootDescription", "_lootStatus", "_lootDragHandle")]
+z_index = 100
+script = ExtResource("1_script")
+_layout = NodePath("InventoryUi/Layout")
+_backdrop = NodePath("Backdrop")
+_frame = NodePath("InventoryUi/Layout/Frame")
+_gridArea = NodePath("InventoryUi/Layout/GridArea")
+_closeButton = NodePath("InventoryUi/Layout/CloseButton")
+_splitButton = NodePath("InventoryUi/Layout/SplitButton")
+_sortButton = NodePath("InventoryUi/Layout/SortButton")
+_swordRoster = NodePath("InventoryUi/Layout/SwordRoster")
+_backpackName = NodePath("InventoryUi/Layout/BackpackName")
+_capacity = NodePath("InventoryUi/Layout/Capacity")
+_description = NodePath("InventoryUi/Layout/Description")
+_bagDragHandle = NodePath("InventoryUi/Layout/DragHandle")
+_lootLayout = NodePath("LootUi/Layout")
+_lootFrame = NodePath("LootUi/Layout/Frame")
+_lootGridArea = NodePath("LootUi/Layout/GridArea")
+_lootTitle = NodePath("LootUi/Layout/Title")
+_lootDescription = NodePath("LootUi/Layout/Description")
+_lootStatus = NodePath("LootUi/Layout/Status")
+_lootDragHandle = NodePath("LootUi/Layout/DragHandle")
+
+[node name="Backdrop" type="ColorRect" parent="." unique_id=1665915696]
+z_index = -2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.012, 0.024, 0.043, 0.68)
+metadata/_edit_use_anchors_ = true
+
+[node name="InventoryUi" type="Control" parent="." unique_id=1086805897]
+z_index = -1
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1515.0
+offset_top = 516.0
+offset_right = 1515.0
+offset_bottom = 516.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Layout" type="Control" parent="InventoryUi" unique_id=975501355]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -507.0
+offset_right = 380.0
+offset_bottom = 507.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(380, 507)
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Frame" type="TextureRect" parent="InventoryUi/Layout" unique_id=833354476]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_frame")
+expand_mode = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="DragHandle" type="Control" parent="InventoryUi/Layout"]
+offset_left = 185.0
+offset_top = 60.0
+offset_right = 645.0
+offset_bottom = 138.0
+mouse_filter = 2
+
+[node name="BagTitle" type="Label" parent="InventoryUi/Layout" unique_id=1882652888]
+layout_mode = 0
+offset_left = 190.0
+offset_top = 76.0
+offset_right = 433.0
+offset_bottom = 111.0
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 22
+text = "背  包"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="EquipmentTitle" type="Label" parent="InventoryUi/Layout" unique_id=866832114]
+layout_mode = 0
+offset_left = 464.0
+offset_top = 76.0
+offset_right = 677.0
+offset_bottom = 111.0
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 22
+text = "装  备"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="CategoryAll" type="Label" parent="InventoryUi/Layout" unique_id=841327539]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 170.0
+offset_right = 153.0
+offset_bottom = 205.0
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 16
+text = "全部"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="CategoryMedicine" type="Label" parent="InventoryUi/Layout" unique_id=1955349630]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 256.0
+offset_right = 153.0
+offset_bottom = 291.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 16
+text = "丹药"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="CategoryMaterials" type="Label" parent="InventoryUi/Layout" unique_id=1486975664]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 342.0
+offset_right = 153.0
+offset_bottom = 377.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 16
+text = "材料"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="CategoryEquipment" type="Label" parent="InventoryUi/Layout" unique_id=1076685024]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 428.0
+offset_right = 153.0
+offset_bottom = 463.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 16
+text = "装备"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="CategoryOther" type="Label" parent="InventoryUi/Layout" unique_id=1348204539]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 514.0
+offset_right = 153.0
+offset_bottom = 549.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 16
+text = "其他"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="KeeperPortrait" type="TextureRect" parent="InventoryUi/Layout" unique_id=2074018480]
+layout_mode = 0
+offset_left = 323.0
+offset_top = 188.0
+offset_right = 521.0
+offset_bottom = 477.0
+mouse_filter = 2
+texture = SubResource("Portrait")
+expand_mode = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="SwordIcon" type="TextureRect" parent="InventoryUi/Layout" unique_id=737681691]
+layout_mode = 0
+offset_left = 201.0
+offset_top = 253.0
+offset_right = 285.0
+offset_bottom = 420.0
+mouse_filter = 2
+texture = ExtResource("4_sword")
+expand_mode = 1
+stretch_mode = 5
+metadata/_edit_use_anchors_ = true
+
+[node name="SwordCaption" type="Label" parent="InventoryUi/Layout" unique_id=438932898]
+layout_mode = 0
+offset_left = 205.0
+offset_top = 421.0
+offset_right = 285.0
+offset_bottom = 447.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 13
+text = "飞剑"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="SwordRoster" type="Label" parent="InventoryUi/Layout" unique_id=1227440050]
+layout_mode = 0
+offset_left = 190.0
+offset_top = 464.0
+offset_right = 654.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="BackpackName" type="Label" parent="InventoryUi/Layout" unique_id=1848806009]
+layout_mode = 0
+offset_left = 551.0
+offset_top = 322.0
+offset_right = 673.0
+offset_bottom = 354.0
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="BackpackCaption" type="Label" parent="InventoryUi/Layout" unique_id=1368198343]
+layout_mode = 0
+offset_left = 551.0
+offset_top = 355.0
+offset_right = 673.0
+offset_bottom = 380.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 12
+text = "行囊"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Capacity" type="Label" parent="InventoryUi/Layout" unique_id=101122714]
+layout_mode = 0
+offset_left = 517.0
+offset_top = 521.0
+offset_right = 677.0
+offset_bottom = 552.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GridArea" type="Control" parent="InventoryUi/Layout" unique_id=6639755]
+anchors_preset = 0
+offset_left = 194.0
+offset_top = 573.0
+offset_right = 677.0
+offset_bottom = 892.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Description" type="Label" parent="InventoryUi/Layout" unique_id=2036926340]
+layout_mode = 0
+offset_left = 190.0
+offset_top = 905.0
+offset_right = 684.0
+offset_bottom = 935.0
+theme_override_colors/font_color = Color(0.561, 0.667, 0.753, 1)
+theme_override_font_sizes/font_size = 12
+text = "拖动摆放 · 双击背包换装 · E 使用疗伤丹"
+horizontal_alignment = 1
+autowrap_mode = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="SplitButton" type="Button" parent="InventoryUi/Layout" unique_id=379413912]
+layout_mode = 0
+offset_left = 205.0
+offset_top = 953.0
+offset_right = 418.0
+offset_bottom = 985.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("InventoryButtonStyle")
+text = "拆分"
+metadata/_edit_use_anchors_ = true
+
+[node name="SortButton" type="Button" parent="InventoryUi/Layout" unique_id=52378066]
+layout_mode = 0
+offset_left = 452.0
+offset_top = 953.0
+offset_right = 665.0
+offset_bottom = 985.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.953, 0.835, 0.569, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("InventoryButtonStyle")
+text = "整理"
+metadata/_edit_use_anchors_ = true
+
+[node name="CloseButton" type="Button" parent="InventoryUi/Layout" unique_id=1108595816]
+layout_mode = 0
+offset_left = 650.0
+offset_top = 45.0
+offset_right = 715.0
+offset_bottom = 106.0
+mouse_filter = 2
+flat = true
+metadata/_edit_use_anchors_ = true
+
+[node name="LootUi" type="Control" parent="." unique_id=796321289]
+z_index = -1
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1056.0
+offset_top = 525.0
+offset_right = 1056.0
+offset_bottom = 525.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Layout" type="Control" parent="LootUi" unique_id=615816327]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -883.0
+offset_top = -421.0
+offset_right = -57.0
+offset_bottom = 421.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(413, 421)
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="LootUi/Layout" unique_id=1188108310]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("LootPanelStyle")
+
+[node name="DragHandle" type="Control" parent="LootUi/Layout"]
+offset_left = 18.0
+offset_top = 10.0
+offset_right = 808.0
+offset_bottom = 68.0
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="LootUi/Layout" unique_id=1227417451]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 15.0
+offset_right = 806.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(1, 0.878, 0.627, 1)
+theme_override_font_sizes/font_size = 24
+text = "搜刮物资"
+
+[node name="GridArea" type="Control" parent="LootUi/Layout" unique_id=604292564]
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 119.0
+offset_right = 806.0
+offset_bottom = 640.0
+mouse_filter = 2
+
+[node name="Description" type="Label" parent="LootUi/Layout" unique_id=295954061]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 736.0
+offset_right = 808.0
+offset_bottom = 766.0
+theme_override_colors/font_color = Color(0.816, 0.847, 0.875, 1)
+theme_override_font_sizes/font_size = 13
+text = "拖动物品摆放；双击搜出的物品可拾取"
+autowrap_mode = 3
+
+[node name="Status" type="Label" parent="LootUi/Layout" unique_id=406297630]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 772.0
+offset_right = 808.0
+offset_bottom = 807.0
+theme_override_colors/font_color = Color(0.816, 0.847, 0.875, 1)
+theme_override_font_sizes/font_size = 14
+text = "搜索完成，可拖动或双击拾取    Esc 关闭"

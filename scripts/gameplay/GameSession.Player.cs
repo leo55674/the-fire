@@ -29,7 +29,7 @@ public partial class GameSession : Node
 		}
 		_verticalVelocity += _balance.Gravity * dt;
 		if (!IsSwordControlled && _commands.Held("jump") && Player.Y >= GroundY) _verticalVelocity = -_balance.JumpImpulse;
-		Player = new Vector2(Mathf.Clamp(Player.X, -_balance.WorldHalfWidth, _balance.WorldHalfWidth), MathF.Min(GroundY, Player.Y + _verticalVelocity * dt));
+		Player = new Vector2(Mathf.Clamp(Player.X, IsInRealm ? -690 : -_balance.WorldHalfWidth, IsInRealm ? 690 : _balance.WorldHalfWidth), MathF.Min(GroundY, Player.Y + _verticalVelocity * dt));
 		if (Player.Y >= GroundY) _verticalVelocity = 0;
 		var spiritPosition = IsSwordControlled ? SwordPosition : Player;
 		var emberRecovery = IsInSpiritRecoveryRange(spiritPosition) ? _balance.EmberTombRecovery : IsSwordControlled ? 0 : _balance.EmberPassiveRecovery;
@@ -90,7 +90,7 @@ public partial class GameSession : Node
 		{
 			SwordVelocity = (_swordAttackTarget - SwordPosition).Normalized() * _balance.SwordAttackSpeed;
 			SwordPosition = SwordPosition.MoveToward(_swordAttackTarget, _balance.SwordAttackSpeed * dt);
-			var attackHit = !_swordAttackHit ? _enemySystem.FindLivingNear(SwordPosition, _balance.EnemyAttackHitRadius) : null;
+			var attackHit = !_swordAttackHit && !IsInRealm ? _enemySystem.FindLivingNear(SwordPosition, _balance.EnemyAttackHitRadius) : null;
 			if (attackHit != null)
 			{
 				_swordAttackHit = true;
@@ -113,7 +113,7 @@ public partial class GameSession : Node
 
 		var distance = SwordDistance;
 		if (!IsInSpiritRecoveryRange(SwordPosition)) Ember = MathF.Max(0, Ember - (_balance.EmberControlBaseDrain + distance / _balance.EmberControlDistanceDrain) * dt);
-		var hit = _swordHitCooldown <= 0 ? _enemySystem.FindLivingNear(SwordPosition, _balance.SwordHitRadius) : null;
+		var hit = _swordHitCooldown <= 0 && !IsInRealm ? _enemySystem.FindLivingNear(SwordPosition, _balance.SwordHitRadius) : null;
 		if (hit != null)
 		{
 			_swordHitCooldown = _balance.SwordHitCooldown;
@@ -128,7 +128,7 @@ public partial class GameSession : Node
 
 	private Vector2 ReplaySwordFollowPosition() => Player + new Vector2(_weaponSystem.FormationFacing * 46, -44);
 	private bool IsInSpiritRecoveryRange(Vector2 position) =>
-		position.DistanceTo(MainFire) < _balance.SwordTombRadius || Fires.Exists(fire => position.DistanceTo(fire.Position) < fire.Radius);
+		!IsInRealm && (position.DistanceTo(MainFire) < _balance.SwordTombRadius || Fires.Exists(fire => position.DistanceTo(fire.Position) < fire.Radius));
 
 	private void RecordSwordSample(float dt)
 	{
@@ -192,7 +192,7 @@ public partial class GameSession : Node
 			ReplaySwordVelocity = (ReplaySwordPosition - previous) / MathF.Max(dt, .001f);
 			if (_replayHitCooldown <= 0)
 			{
-				var hit = _enemySystem.FindLivingAlong(previous, ReplaySwordPosition, _balance.SwordHitRadius);
+				var hit = !IsInRealm ? _enemySystem.FindLivingAlong(previous, ReplaySwordPosition, _balance.SwordHitRadius) : null;
 				if (hit != null)
 				{
 					_replayHitCooldown = _balance.SwordHitCooldown;
@@ -259,8 +259,15 @@ public partial class GameSession : Node
 		if (IsSwordControlled) BeginSwordReturn(Message);
 		EmitSignal(SignalName.SoundCueRequested, "spirit_hurt");
 		if (Health > 0) return;
-		_inventory.Remove("wood", Wood / _balance.RespawnWoodLossDivisor); Fuel = MathF.Max(0, Fuel - _balance.RespawnFuelPenalty); Health = _balance.MaxHealth; Player = MainFire;
-		Message = "忆身消散后在剑冢重凝，并遗失了部分剑骸。";
+		_inventory.Remove("wood", Wood / _balance.RespawnWoodLossDivisor); Fuel = MathF.Max(0, Fuel - _balance.RespawnFuelPenalty); Health = _balance.MaxHealth;
+		if (IsInRealm)
+		{
+			LeaveRealm();
+			Message = "忆身消散，你被秘境送回入口，并遗失了部分剑骸。";
+		}
+		else { Player = MainFire; Message = "忆身消散后在剑冢重凝，并遗失了部分剑骸。"; }
 	}
+
+	public void DamageFromBoss() => DamagePlayer();
 
 }

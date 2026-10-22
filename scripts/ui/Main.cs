@@ -27,6 +27,8 @@ public partial class Main : Node2D
 	[Export] private LayeredPanelCanvas _panelCanvas;
 	[Export] private LootPanel _lootPanel;
 	[Export] private SwordCaseHud _swordCaseHud;
+	[Export] private ForgePanel _forgePanel;
+	[Export] private FrostRealm _frostRealm;
 	private bool _mainMenuOpen = true;
 	private bool _settingsOpen;
 	private int _selectedMenuItem;
@@ -36,10 +38,12 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
-		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null || _lootPanel == null || _swordCaseHud == null)
-			throw new InvalidOperationException("Main requires ActionBindings, GameSession, WorldPresentation, SettingsView, LayeredPanelCanvas, LootPanel, and SwordCaseHud nodes.");
+		if (_input == null || _session == null || _worldPresentation == null || _settingsView == null || _panelCanvas == null || _lootPanel == null || _swordCaseHud == null || _forgePanel == null || _frostRealm == null)
+			throw new InvalidOperationException("Main requires its input, session, world, realm, and interface nodes.");
 		_panelCanvas.DrawPanels = DrawLayeredPanels;
 		_lootPanel.Session = _session;
+		_forgePanel.Session = _session;
+		_session.RealmRunReset += _frostRealm.Reset;
 		_menuButtonNormal = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_normal.png");
 		_menuButtonSelected = GD.Load<Texture2D>("res://assets/art/runtime/ui/buttons/ui_button_menu_selected.png");
 		_settingsIcon = GD.Load<Texture2D>("res://assets/art/runtime/ui/icons/ui_icon_settings.png");
@@ -65,6 +69,9 @@ public partial class Main : Node2D
 		var mouse = GetViewport().GetMousePosition();
 		var attackTarget = new Vector2(_session.CameraFocus.X + mouse.X - GetViewport().GetVisibleRect().Size.X / 2, mouse.Y);
 		_session.Tick(dt, _input.ConsumeGameplay(attackTarget));
+		_frostRealm.Tick(_session, _session.InventoryOpen || _session.ComboOpen ? 0 : dt);
+		_gameBackdropView.Visible = !_session.IsInRealm;
+		_forgePanel.Sync();
 		SyncSwordCaseHud();
 		var daylight = _session.IsNight || _session.FinalNight > 0 ? new Color(.48f, .58f, .78f) : Colors.White;
 		_gameBackdropView.Modulate = daylight;
@@ -98,7 +105,17 @@ public partial class Main : Node2D
 		}
 		if (_session.ComboOpen) { HandleComboInput(@event); return; }
 		if (_settingsOpen) { _settingsView.HandleInput(@event); return; }
-		if (@event is InputEventMouseMotion swordMotion) { if (_session.InventoryOpen) return; _session.CaptureSwordMouseMotion(swordMotion.Relative); }
+		if (_session.ForgeOpen)
+		{
+			if (@event is InputEventKey forgeKey && forgeKey.Pressed && !forgeKey.Echo && forgeKey.Keycode == Key.Escape)
+			{ _session.CloseForge(); _forgePanel.Sync(); SyncMouseMode(); }
+			return;
+		}
+		if (@event is InputEventMouseMotion swordMotion)
+		{
+			if (_session.InventoryOpen) { _lootPanel.HandleMotion(swordMotion); return; }
+			_session.CaptureSwordMouseMotion(swordMotion.Relative);
+		}
 		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
 		{
 			if (_session.InventoryOpen && keyEvent.Keycode == Key.Escape) { _session.ToggleInventory(); SyncMouseMode(); return; }
@@ -205,21 +222,23 @@ public partial class Main : Node2D
 	{
 		SyncMouseMode();
 		_titleBackdropView.Visible = _mainMenuOpen;
-		_gameBackdropView.Visible = !_mainMenuOpen;
+		_gameBackdropView.Visible = !_mainMenuOpen && !_session.IsInRealm;
+		_frostRealm.Visible = !_mainMenuOpen && _session.IsInRealm;
 		_worldPresentation.Visible = !_mainMenuOpen;
 		_mainMenuView.Visible = _mainMenuOpen && !_settingsOpen;
 		_settingsView.Visible = _settingsOpen;
+		_forgePanel.Sync();
 		_settingsView.Resolution = Resolutions[_resolutionIndex];
 		_settingsView.MasterVolume = _masterVolume;
 		_settingsView.Refresh();
 		SyncSwordCaseHud();
-		if (!_mainMenuOpen) _worldPresentation.Sync(_session, false);
+		if (!_mainMenuOpen) { _frostRealm.Tick(_session, 0); _worldPresentation.Sync(_session, false); }
 		QueueRedraw();
 	}
 
 	private void SyncSwordCaseHud()
 	{
-		_swordCaseHud.Visible = !_mainMenuOpen && !_settingsOpen && !_session.InventoryOpen && !_session.ComboOpen;
+		_swordCaseHud.Visible = !_mainMenuOpen && !_settingsOpen && !_session.InventoryOpen && !_session.ComboOpen && !_session.ForgeOpen;
 		if (_swordCaseHud.Visible) _swordCaseHud.Sync(_session);
 	}
 
@@ -237,7 +256,7 @@ public partial class Main : Node2D
 		var size = GetViewportRect().Size;
 		if (_mainMenuOpen) UpdateMenuView();
 		if (_mainMenuOpen) return;
-		DrawVillageBoundary(size);
+		if (!_session.IsInRealm) DrawVillageBoundary(size);
 		DrawHud(size);
 	}
 }

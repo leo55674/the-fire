@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public partial class GameSession : Node
 {
 	[Signal] public delegate void SoundCueRequestedEventHandler(string cue);
+	[Signal] public delegate void RealmRunResetEventHandler();
 
 	[Export] private Inventory _inventory;
 	[Export] private WeaponSystem _weaponSystem;
@@ -76,7 +77,7 @@ public partial class GameSession : Node
 	public bool IsReplaySwordActive => _replayActive || _replayReturning;
 	public IReadOnlyList<int> SwordCombo => _swordCombo;
 	public bool ComboOpen { get; private set; }
-	public bool WantsMouseCapture => IsSwordControlled && !ComboOpen && !InventoryOpen;
+	public bool WantsMouseCapture => IsSwordControlled && !ComboOpen && !InventoryOpen && !ForgeOpen;
 	public float RecordedSwordDuration => HasRecordedSword ? _recordedSword[^1].Time : 0;
 	public float SwordRecordingDuration => IsSwordControlled ? MathF.Min(_recordingTime, _balance.SwordRecordMaxDuration) : 0;
 	public float SwordDamage => _balance.SwordDamage;
@@ -102,6 +103,10 @@ public partial class GameSession : Node
 	public int FireLevel { get; private set; } = 1;
 	public bool NameFound { get; private set; } = true;
 	public bool InventoryOpen { get; private set; }
+	public bool ForgeOpen { get; private set; }
+	public bool IsInRealm { get; private set; }
+	public const float RealmEntranceX = 1700f;
+	private Vector2 _overworldReturnPosition;
 	public string Message { get; private set; } = "守住剑冢，右键切换御剑，Shift 突进闪避。";
 	public Vector2 MainFire => new(0, GroundY);
 
@@ -153,6 +158,7 @@ public partial class GameSession : Node
 	{
 		_commands = commands;
 		PlayerMoving = false;
+		if (ForgeOpen) return;
 		if (_commands.Pressed("inventory")) ToggleInventory();
 		if (InventoryOpen)
 		{
@@ -177,9 +183,12 @@ public partial class GameSession : Node
 		PlayerMoving = MathF.Abs(Player.X - previousPlayer.X) > .1f || IsDashing;
 		_weaponSystem.UpdateFollowers(Player, PlayerFacing, dt);
 		UpdateSword(dt);
-		UpdateFire(dt);
-		_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory, IsNight || FinalNight > 0);
-		UpdateTemporaryFires(dt);
+		if (!IsInRealm)
+		{
+			UpdateFire(dt);
+			_enemySystem.Tick(dt, Player, MainFire, GroundY, _inventory, IsNight || FinalNight > 0);
+			UpdateTemporaryFires(dt);
+		}
 		HandleInteractions();
 		HandleCombat();
 		var cameraTarget = Player.Lerp(SwordPosition, Mathf.SmoothStep(0, 1, _swordControlBlend));
@@ -206,9 +215,17 @@ public partial class GameSession : Node
 		else InventoryOpen = !InventoryOpen;
 	}
 
+	public void CloseForge() => ForgeOpen = false;
+	public string CraftAtForge()
+	{
+		if (!ForgeOpen) return "请先进入铁匠铺。";
+		return Message = _weaponSystem.CraftNext(_inventory, _balance.SwordCraftMaterialCost);
+	}
+
 	public bool TransferLoot(int from, int to, int amount = int.MaxValue) => _lootSystem.TransferTo(_inventory, from, to, amount);
 
 	public void Start() => Message = "守住剑冢，右键切换御剑，Shift 突进闪避。";
+	public void ReportRealmEvent(string message) => Message = message;
 
 	public void MoveToGround(float groundY)
 	{

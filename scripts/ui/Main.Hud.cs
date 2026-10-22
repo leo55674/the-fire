@@ -24,16 +24,16 @@ public partial class Main : Node2D
 			: _session.IsReplaySwordActive ? "从剑正在连招" : $"连招 {_session.SwordCombo.Count} 式 · J 搭配 · R 出招";
 		DrawString(font, new Vector2(480, 44), swordRecordStatus, HorizontalAlignment.Left, 390, 16, new Color("f4d795"));
 		DrawString(font, new Vector2(480, 68), $"飞剑 {_session.SwordCount}/3：{_session.SwordRoster} · 滚轮切主剑", HorizontalAlignment.Left, 500, 15, new Color("cfe6f4"));
-		DrawString(font, new Vector2(480, 92), $"{(_session.IsNight ? "夜晚" : "白天")} · 剩余 {MathF.Ceiling(_session.PhaseRemaining)} 秒", HorizontalAlignment.Left, 390, 15, new Color("f4d795"));
+		DrawString(font, new Vector2(480, 92), _session.IsInRealm ? "霜蚀秘境 · 左侧出口" : $"{(_session.IsNight ? "夜晚" : "白天")} · 剩余 {MathF.Ceiling(_session.PhaseRemaining)} 秒", HorizontalAlignment.Left, 390, 15, new Color("f4d795"));
 		DrawString(font, new Vector2(18, size.Y - 40), "WASD 移动 | 左键攻击 | 右键御剑", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
 		DrawString(font, new Vector2(18, size.Y - 18), "滚轮切主剑 | J 搭配 | R 连招", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
-		DrawString(font, new Vector2(size.X / 2 + 145, size.Y - 40), "F 搜刮/打造 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
+		DrawString(font, new Vector2(size.X / 2 + 145, size.Y - 40), "F 交互/搜刮 | E 补充 | U 升级 | I 背包", HorizontalAlignment.Left, size.X / 2 - 160, 14, new Color("d0d8df"));
 		DrawTextureRect(_settingsIcon, new Rect2(size.X - 250, size.Y - 39, 24, 24), false);
 		DrawString(font, new Vector2(size.X - 220, size.Y - 18), "F1 \u8bbe\u7f6e", HorizontalAlignment.Left, -1, 14, new Color("aebbc8"));
 		DrawIconButton(GameExitButton(), _closeIcon, "\u9000\u51fa\u6e38\u620f", new Color("442939"));
 		if (_session.NameFound && _session.Player.DistanceTo(new Vector2(430, GroundY)) < 80)
 			DrawString(font, new Vector2(size.X / 2 - 165, size.Y - 72), "\u540d\u5b57\u788e\u7247\uff1aB \u71c3\u70e7\uff08+\u706b\u52bf/+\u68a6\u7070\uff09  G \u5f52\u8fd8", HorizontalAlignment.Left, -1, 15, new Color("d9e8ff"));
-		DrawMiniMap(size);
+		if (!_session.IsInRealm) DrawMiniMap(size);
 		if (_finalNight > 0) DrawString(font, new Vector2(size.X - 218, 142), $"\u70fd\u706b\u957f\u591c\uff1a{MathF.Ceiling(_finalNight)}", HorizontalAlignment.Left, -1, 17, new Color("ffb4a2"));
 		if (!string.IsNullOrEmpty(_session.SearchPrompt)) DrawSearchPrompt(size);
 	}
@@ -68,6 +68,7 @@ public partial class Main : Node2D
 		DrawRect(new Rect2(panel.Position + new Vector2(9, 62), new Vector2(panel.Size.X - 18, 2)), new Color("314150"));
 		DrawRect(new Rect2(Marker(new Vector2(-_session.VillageRadius, 0)) - new Vector2(0, 3), new Vector2(_session.VillageRadius * 2 / worldWidth * (panel.Size.X - 18), 8)), new Color("69b7b0", .55f));
 		DrawCircle(Marker(_session.MainFire), 5, new Color("ff9d4d"));
+		DrawCircle(Marker(new Vector2(GameSession.RealmEntranceX, 0)), 5, new Color("6de0ff"));
 		foreach (var fire in _session.Fires) DrawCircle(Marker(fire.Position), 3, new Color("ffd46b"));
 		foreach (var enemy in _session.Enemies) if (_session.IsVisible(enemy.Position)) DrawCircle(Marker(enemy.Position), 3, new Color("c66a77"));
 		var sight = (155 + _session.Ember * 2.1f - _session.DreamAsh * 10) / worldWidth * (panel.Size.X - 18);

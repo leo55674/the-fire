@@ -11,15 +11,27 @@ public partial class GameSession : Node
 		var burnName = _commands.Pressed("burn_name"); var returnName = _commands.Pressed("return_name");
 		var torch = _commands.Pressed("torch"); var campfire = _commands.Pressed("campfire");
 		if (Fuel <= 0) return;
+		if (IsInRealm)
+		{
+			SearchPrompt = Player.X < -560 ? $"按 {_commands.SearchLabel} 离开霜蚀秘境" : "";
+			if (searchPressed && Player.X < -560) LeaveRealm();
+			return;
+		}
+		if (MathF.Abs(Player.X - RealmEntranceX) < 105 && MathF.Abs(Player.Y - GroundY) < 90)
+		{
+			SearchPrompt = $"按 {_commands.SearchLabel} 进入霜蚀秘境";
+			if (searchPressed) EnterRealm();
+			return;
+		}
 		if (_blacksmith.IsInRange(Player, GroundY, _balance.BlacksmithRange))
 		{
 			SearchPrompt = SwordCount switch
 			{
-				1 => $"按 {_commands.SearchLabel} 打造霜华（需要 {_balance.SwordCraftMaterialCost} 份铸剑铁料；现有 {SwordIron}）",
-				2 => $"按 {_commands.SearchLabel} 打造碧澜（需要 {_balance.SwordCraftMaterialCost} 份铸剑铁料；现有 {SwordIron}）",
-				_ => "铁匠铺：三剑已齐"
+				1 => $"按 {_commands.SearchLabel} 进入铁匠铺（下一把：霜华）",
+				2 => $"按 {_commands.SearchLabel} 进入铁匠铺（下一把：碧澜）",
+				_ => $"按 {_commands.SearchLabel} 查看铁匠铺（三剑已齐）"
 			};
-		if (searchPressed) Message = _weaponSystem.CraftNext(_inventory, _balance.SwordCraftMaterialCost);
+			if (searchPressed) { ForgeOpen = true; SearchPrompt = ""; }
 			return;
 		}
 		UpdateSearch(searchPressed);
@@ -85,9 +97,11 @@ public partial class GameSession : Node
 
 	private void Reset()
 	{
+		IsInRealm = false;
+		EmitSignal(SignalName.RealmRunReset);
 		Fuel = _balance.StartingFuel; Ember = _balance.StartingEmber; Health = _balance.StartingHealth; _inventory.Reset(); FireLevel = _balance.StartingFireLevel; DreamAsh = 0; FinalNight = 0; NameFound = true; IsNight = false; PhaseRemaining = _balance.DayDuration;
 		_weaponSystem.ResetEquipment(PlayerFacing);
-		_lootSystem.Close(); InventoryOpen = false;
+		_lootSystem.Close(); InventoryOpen = false; ForgeOpen = false;
 		Player = MainFire; _enemySystem.Reset(); Fires.Clear();
 		_dashRemaining = 0; _dashCooldown = 0; IsDashing = false;
 		PlayerMoving = false;
@@ -103,6 +117,36 @@ public partial class GameSession : Node
 		_chestSpawnTimer = _balance.ChestInitialSpawnInterval;
 		SearchPrompt = "";
 		Message = "神识在剑冢苏醒，新的远征开始了。";
+	}
+
+	private void EnterRealm()
+	{
+		_overworldReturnPosition = Player;
+		IsInRealm = true;
+		RelocatePlayer(new Vector2(-590, GroundY));
+		Message = "霜蚀秘境：击败守门的霜冥骑士，左侧可返回。";
+		SearchPrompt = "";
+	}
+
+	private void LeaveRealm()
+	{
+		IsInRealm = false;
+		RelocatePlayer(_overworldReturnPosition + new Vector2(-130, 0));
+		Message = "你离开了霜蚀秘境。";
+		SearchPrompt = "";
+	}
+
+	private void RelocatePlayer(Vector2 destination)
+	{
+		Player = destination;
+		_verticalVelocity = 0;
+		SwordState = SwordMode.Following;
+		SwordPosition = SwordFollowPosition();
+		ReplaySwordPosition = ReplaySwordFollowPosition();
+		_replayActive = false;
+		_replayReturning = false;
+		_weaponSystem.UpdateFollowers(Player, PlayerFacing, 1);
+		CameraFocus = Player;
 	}
 
 }
